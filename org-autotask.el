@@ -1,7 +1,7 @@
 ;;; org-autotask.el --- My GTD setup in `org' -*- lexical-binding: t -*-
 
 ;; Version: 0.1
-;; URL: https://github.com/laurynas-biveinis/dotfiles/
+;; URL: https://github.com/laurynas-biveinis/org-autotask
 ;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: outlines
 
@@ -87,9 +87,9 @@ The tags and the selection keys will be added to as a single group to
 ;; Action keywords
 (defcustom org-autotask-next-action-keyword "TODO"
   "The TODO entry keyword that designates a GTD next action.
-Projects also have this keyword (in addition to `org-autotask-project-list' tag.)
-It must be present in `org-todo-keywords', either directly or through per-file
-configuration, with an optional fast state selection character."
+Projects also have this keyword (in addition to `org-autotask-project-list'
+tag.) It must be present in `org-todo-keywords', either directly or through
+per-file configuration, with an optional fast state selection character."
   :type '(string)
   :group 'org-autotask
   :package-version '(org-autotask . "0.1"))
