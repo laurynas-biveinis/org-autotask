@@ -211,8 +211,7 @@ property."
          (goto-char headline-pos)
          ,@body))))
 
-;; FIXME(laurynas): remove mid -org-
-(defun org-autotask-clock-in-org-node-with-url (url)
+(defun org-autotask-clock-in-node-with-url (url)
   "Go to the `org' node with the given URL property value and clock it in."
   (org-mark-ring-push)
   (org-autotask-with-org-node-with-url url

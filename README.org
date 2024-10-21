@@ -74,7 +74,7 @@ TODO example
   ~my-org-clock-gated-commands~ instead.
 - ~org-autotask-with-org-node-with-url (url &rest body)~: a macro to find the Org node
   with this URL across Org agenda files and then execute the body forms there.
-- ~org-autotask-clock-in-org-node-with-url (url)~: find the Org node with this URL and
+- ~org-autotask-clock-in-node-with-url (url)~: find the Org node with this URL and
   clock it in.
 - ~org-autotask-with-different-org-clock (&rest body)~: a macro to save the current Org
   clock state, clock in the current Org node, execute the body forms, and resume

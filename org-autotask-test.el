@@ -714,8 +714,8 @@
         (delete-file temp-file-1)
         (delete-file temp-file-2)))))
 
-(ert-deftest org-autotask-clock-in-org-node-with-url-basic ()
-  "Basic test for `org-autotask-clock-in-org-node-with-url'."
+(ert-deftest org-autotask-clock-in-node-with-url-basic ()
+  "Basic test for `org-autotask-clock-in-node-with-url'."
   (let ((temp-file (make-temp-file "org-tst" nil ".org")))
     (org-autotask--buffer-test
         ((org-agenda-files (list temp-file)))
@@ -731,7 +731,7 @@
               (org-insert-todo-heading-respect-content)
               (insert "Item 2")
               (org-set-property "URL" "https://2.example.com"))
-            (org-autotask-clock-in-org-node-with-url "https://1.example.com")
+            (org-autotask-clock-in-node-with-url "https://1.example.com")
             (org-clock-goto)
             (should (org-clocking-p))
             (should (string= (org-entry-get nil "URL")
