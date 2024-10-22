@@ -30,7 +30,8 @@
   `(let ((org-use-tag-inheritance nil)
          (org-todo-log-states nil)
          (org-todo-repeat-to-state nil)
-         (org-todo-keywords '((sequence "TODO(t!)" "|" "DONE(d!)" "KILL(k!)")))
+         (org-todo-keywords
+          '((sequence "TODO(t!)" "|" "DONE(d!)" "CANCELLED(c!)")))
          (org-clock-in-hook nil)
          (current-clock-marker (when (org-clocking-p)
                                  (copy-marker org-clock-marker)))
