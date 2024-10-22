@@ -102,7 +102,7 @@ configuration, with an optional fast state selection character."
   :group 'org-autotask
   :package-version '(org-autotask . "0.1"))
 
-(defcustom org-autotask-cancelled-keyword "KILL"
+(defcustom org-autotask-cancelled-keyword "CANCELLED"
   "The TODO entry keyword that designates a cancelled task or project.
 It must be present in `org-todo-keywords', either directly or through per-file
 configuration, with an optional fast state selection character."

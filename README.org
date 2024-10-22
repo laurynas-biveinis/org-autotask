@@ -33,7 +33,7 @@ For actions, there are three customizable TODO entry keywords:
 - ~org-autotask-done-keyword~: The keyword for a completed task or project. Defaults to
   =DONE=.
 - ~org-autotask-cancelled-keyword~: The keyword for a cancelled task or project.
-  Defaults to =KILL=.
+  Defaults to =CANCELLED=.
 
 For clocking automation:
 - ~org-autotask-clock-gated-commands~: A list of commands, which may only be invoked
