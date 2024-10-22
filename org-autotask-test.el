@@ -213,7 +213,7 @@
 
 (ert-deftest org-autotask-cancelled-keyword-without-selection-char-ok ()
   "Test that the cancelled keyword is accepted without the selection char."
-  (org-autotask--test-fixture ((org-autotask-cancelled-keyword "KILL"))
+  (org-autotask--test-fixture ((org-autotask-cancelled-keyword "CANCELLED"))
     (org-autotask-initialize)))
 
 (ert-deftest org-autotask-cancelled-keyword-absent-but-prefix ()
@@ -439,7 +439,7 @@
        (org-autotask-project-list
         (make-org-autotask-list
          :tag "bar" :select-char ?b :description "Bars"))
-       (org-todo-keywords '((sequence "FOO" "|" "DONE" "KILL"))))
+       (org-todo-keywords '((sequence "FOO" "|" "DONE" "CANCELLED"))))
     (org-autotask-initialize)
     (org-insert-todo-heading-respect-content)
     (org-autotask-insert-project "Title text")
