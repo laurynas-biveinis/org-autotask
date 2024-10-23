@@ -47,7 +47,7 @@ list-related customization is:
   one. They, together with the waiting-for context, are mutually exclusive.
 - ~org-autotask-waitingfor~: The GTD waiting-for context. Defaults to =@waitingfor= /
    =w=.
-- ~org-autotask-project-list~: The GTD project list. Defaults to =project= / =p=.
+- ~org-autotask-projects~: The GTD project list. Defaults to =project= / =p=.
 - ~org-autotask-somedaymaybe-list~: The GTD someday/maybe list. Defaults to
   =somedaymaybe= / =m=.
 

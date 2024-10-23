@@ -66,7 +66,7 @@
        (org-autotask-waitingfor
         (make-org-autotask-list
          :tag "@sometag" :select-char ?f :description "Waiting-for context"))
-       (org-autotask-project-list
+       (org-autotask-projects
         (make-org-autotask-list
          :tag "prj" :select-char ?c :description "Projects"))
        (org-autotask-somedaymaybe-list
@@ -90,7 +90,7 @@
        (org-autotask-waitingfor
         (make-org-autotask-list
          :tag "@anothertag" :select-char ?x :description "Waiting-for context"))
-       (org-autotask-project-list
+       (org-autotask-projects
         (make-org-autotask-list
          :tag "foo" :select-char ?f :description "Foos"))
        (org-autotask-somedaymaybe-list
@@ -243,7 +243,7 @@
 (ert-deftest org-autotask-initialize-org-stuck-projects ()
   "Test that `org-stuck-projects' is properly initialized."
   (org-autotask--test-fixture
-      ((org-autotask-project-list
+      ((org-autotask-projects
         (make-org-autotask-list
          :tag "prj" :select-char ?p :description "Projects"))
        (org-autotask-somedaymaybe-list
@@ -322,7 +322,7 @@
 (ert-deftest org-autotask-active-non-project-tasks-basic ()
   "Basic test for `org-autotask-active-non-project-tasks-agenda'."
   (org-autotask--test-fixture
-      ((org-autotask-project-list
+      ((org-autotask-projects
         (make-org-autotask-list :tag "prj" :select-char ?p
                                 :description "Prj description"))
        (org-autotask-somedaymaybe-list
@@ -340,7 +340,7 @@
 (ert-deftest org-autotask-archivable-tasks-basic ()
   "Basic test for `org-autotask-archivable-tasks'."
   (org-autotask--test-fixture
-      ((org-autotask-project-list
+      ((org-autotask-projects
         (make-org-autotask-list :tag "prj" :select-char ?p
                                 :description "Prj description"))
        (org-autotask-done-keyword "COMPLETED")
@@ -362,7 +362,7 @@
        (org-autotask-waitingfor
         (make-org-autotask-list :tag "@wait" :select-char ?t
                                 :description "Waiting for"))
-       (org-autotask-project-list
+       (org-autotask-projects
         (make-org-autotask-list :tag "prj" :select-char ?p
                                 :description "Projects"))
        (org-autotask-somedaymaybe-list
@@ -424,7 +424,7 @@
     (should (string= (org-get-heading t t) "Test title"))
     (should (string= (org-get-todo-state) org-autotask-next-action-keyword))
     (should (equal (org-get-tags) (list (org-autotask-list-tag
-                                         org-autotask-project-list))))))
+                                         org-autotask-projects))))))
 
 (ert-deftest org-autotask-insert-project-reject-empty ()
   "Test that `org-autotask-insert-project' rejects empty title."
@@ -436,7 +436,7 @@
   "Test `org-autotask-insert-project' with non-default config."
   (org-autotask--buffer-test
       ((org-autotask-next-action-keyword "FOO")
-       (org-autotask-project-list
+       (org-autotask-projects
         (make-org-autotask-list
          :tag "bar" :select-char ?b :description "Bars"))
        (org-todo-keywords '((sequence "FOO" "|" "DONE" "CANCELLED"))))
@@ -446,7 +446,7 @@
     (should (string= (org-get-heading t t) "Title text"))
     (should (string= (org-get-todo-state) org-autotask-next-action-keyword))
     (should (equal (org-get-tags) (list (org-autotask-list-tag
-                                         org-autotask-project-list))))))
+                                         org-autotask-projects))))))
 
 (ert-deftest org-autotask-complete-item-basic ()
   "Basic test for `my-org-complete-item'."

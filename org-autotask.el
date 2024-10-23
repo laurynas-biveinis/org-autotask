@@ -63,7 +63,7 @@ The tags and the selection keys will be added to as a single group to
   :group 'org-autotask
   :package-version '(org-autotask . "0.1"))
 
-(defcustom org-autotask-project-list
+(defcustom org-autotask-projects
   (make-org-autotask-list :tag "project" :select-char ?p :description "Projects")
   "The GTD project list."
   :type '(struct :tag "Project list."
@@ -87,9 +87,9 @@ The tags and the selection keys will be added to as a single group to
 ;; Action keywords
 (defcustom org-autotask-next-action-keyword "TODO"
   "The TODO entry keyword that designates a GTD next action.
-Projects also have this keyword (in addition to `org-autotask-project-list'
-tag.) It must be present in `org-todo-keywords', either directly or through
-per-file configuration, with an optional fast state selection character."
+Projects also have this keyword (in addition to `org-autotask-projects' tag.) It
+must be present in `org-todo-keywords', either directly or through per-file
+configuration, with an optional fast state selection character."
   :type '(string)
   :group 'org-autotask
   :package-version '(org-autotask . "0.1"))
@@ -310,12 +310,12 @@ inconsistencies."
                                 (list org-autotask-waitingfor)))
                 (list (cons :endgroup nil))
                 (list (org-autotask--make-org-alist-cons-cell
-                       org-autotask-project-list))
+                       org-autotask-projects))
                 (list (org-autotask--make-org-alist-cons-cell
                        org-autotask-somedaymaybe-list))
                 org-tag-alist))
   (setq org-stuck-projects `(,(concat "+" (org-autotask-list-tag
-                                           org-autotask-project-list)
+                                           org-autotask-projects)
                                       (org-autotask-list-not-tag
                                        org-autotask-somedaymaybe-list) "/!"
                                       org-autotask-next-action-keyword)
@@ -371,22 +371,22 @@ TODO(laurynas) explanation for LEVEL=2."
   "Return an `org-agenda' command part to show active non-project next actions."
   (list "Non-project next actions"
         'tags-todo
-        (concat (org-autotask-list-not-tag org-autotask-project-list)
+        (concat (org-autotask-list-not-tag org-autotask-projects)
                 (org-autotask-list-not-tag org-autotask-waitingfor)
                 (org-autotask-list-not-tag org-autotask-somedaymaybe-list)
                 "/!" org-autotask-next-action-keyword)
         `((org-use-tag-inheritance
-           '(,(org-autotask-list-tag org-autotask-project-list)
+           '(,(org-autotask-list-tag org-autotask-projects)
              ,(org-autotask-list-tag org-autotask-somedaymaybe-list))))))
 
 (defun org-autotask-archivable-tasks ()
   "Return an `org-agenda' command part to show archivable non-project tasks."
   (list 'tags
-        (concat (org-autotask-list-not-tag org-autotask-project-list) "/+"
+        (concat (org-autotask-list-not-tag org-autotask-projects) "/+"
                 org-autotask-done-keyword "|+" org-autotask-cancelled-keyword)
         `((org-agenda-overriding-header "Archivable tasks")
           (org-use-tag-inheritance '(,(org-autotask-list-tag
-                                       org-autotask-project-list))))))
+                                       org-autotask-projects))))))
 
 ;; FIXME(laurynas): prefix org-autotask-agenda- here and everywhere applying
 (defun org-autotask-contextless-tasks ()
@@ -397,7 +397,7 @@ TODO(laurynas) explanation for LEVEL=2."
                                    (org-autotask-list-not-tag context))
                                  org-autotask-contexts))
          (org-autotask-list-not-tag org-autotask-waitingfor)
-         (org-autotask-list-not-tag org-autotask-project-list)
+         (org-autotask-list-not-tag org-autotask-projects)
          (org-autotask-list-not-tag org-autotask-somedaymaybe-list))
         '((org-agenda-overriding-header "Contextless tasks"))))
 
@@ -415,7 +415,7 @@ The heading must be already created."
   "Insert a new project task with TITLE at point.
 The heading must be already created."
   (org-autotask--insert-item title org-autotask-next-action-keyword
-                           (org-autotask-list-tag org-autotask-project-list)))
+                             (org-autotask-list-tag org-autotask-projects)))
 
 (defun org-autotask-insert-waiting-for-next-action (title)
   "Insert a new next action waiting-for task with TITLE at point.
