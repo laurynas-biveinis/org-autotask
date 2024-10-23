@@ -1,28 +1,52 @@
-#+TITLE: org-autotask: GTD implementation bricks in Org
+#+TITLE: org-autotask: building agendas and Org automation
 
 * Introduction
 
 This is a set of building blocks for a task management implementation in Org
 following GTD (Getting Things Done), with focus on agenda views for contexts and
-automation
+automation, for clocking and writing own ones in Elisp. Assumes familiarity with Org.
+
+* Example
+
+TODO
+
+* Concepts
+
+- A /list/ is a collection of items, task or otherwise, as in GTD. A list
+  has an Org tag for its items, a quick selection character, and a description.
+- A /context/ is a place where some TODO items, but not others, can be done. An item
+  can belong to only one context. Items are assigned to contexts with Org tags. One
+  special context is "waiting-for" for tasks that somebody else have to complete.
+- A /project/ contains items (subprojects or TODO items) in its subtree. It is tagged
+  with the configurable project list-specific tag and also has a TODO entry keyword.
+- /Someday-maybe/ items are tagged with their category tag, which is configured to be
+  inheritable in Org, thus either the items themselves or one of the outline
+  ancestors have to be tagged with it. Items can be moved from and to this state by
+  refiling.
 
 * Configuration
 
-The package puts constraints on the Org configuration for the purposes of GTD
-implementation:
-- A /project/ is tagged with a configurable project category-specific tag and also
-  has a TODO entry keyword.
-- /Someday-maybe/ items are marked with their category tag, which is configured to be
-  inheritable in ~org~. The items are moved to and from someday/maybe by refiling,
-  thus there should be at least one top-level heading tagged with this tag.
+Since this package expects certain Org configuration, some variables should be left
+untouched, or they will be overwritten:
+- ~org-todo-repeat-to-state~
+- ~org-enforce-todo-dependencies~
+- ~org-stuck-projects~
 
-Tasks (and some other items such projects) are grouped into lists, as in GTD. A list
-has an Org tag for its items, a quick selection character, and a description. The
+Some other variables have to be set by user and then will be checked/modified during
+setup:
+- ~org-todo-keywords~ must contain all of the ~org-autotask~-configured keywords.
+- ~org-use-tag-inheritance~ must either be ~t~, a string that matches the
+  someday/maybe tag, or be a list. If it's a list, the tag for someday/maybe will be
+  added there.
+- ~org-tag-alist~ must not have anything related to contexts, projects, and
+  someday/maybe, and they will be added to it.
+
+Tasks (and some other items such projects) are grouped into lists, as in GTD. The
 list-related customization is:
 - ~org-autotask-contexts~: An (elisp) list of GTD contexts, except for the waiting-for
   one. They, together with the waiting-for context, are mutually exclusive.
-- ~org-autotask-waitingfor-context~: The GTD waiting-for context. Defaults to
-  =@waitingfor= / =w=
+- ~org-autotask-waitingfor~: The GTD waiting-for context. Defaults to =@waitingfor= /
+   =w=.
 - ~org-autotask-project-list~: The GTD project list. Defaults to =project= / =p=.
 - ~org-autotask-somedaymaybe-list~: The GTD someday/maybe list. Defaults to
   =somedaymaybe= / =m=.

@@ -37,7 +37,7 @@ items."
 
 ;; Customization
 (defgroup org-autotask nil
-  "Configure `org' for GTD."
+  "Configure `org-autotask'."
   :group 'org)
 
 (defcustom org-autotask-contexts nil
@@ -52,9 +52,9 @@ The tags and the selection keys will be added to as a single group to
   :group 'org-autotask
   :package-version '(org-autotask . "0.1"))
 
-(defcustom org-autotask-waitingfor-context
+(defcustom org-autotask-waitingfor
   (make-org-autotask-list :tag "@waitingfor" :select-char ?w
-                        :description "Waiting-for items")
+                          :description "Waiting-for items")
   "The GTD waiting-for context."
   :type '(struct :tag "GTD waiting-for context"
                  (string :tag "`org Tag")
@@ -249,7 +249,8 @@ The marker must be at the new clock position."
 
 (defun org-autotask--make-org-alist-cons-cell (gtd-list)
   "Convert a GTD-LIST to a cons cell for `org-tag-alist'."
-  (cons (org-autotask-list-tag gtd-list) (org-autotask-list-select-char gtd-list)))
+  (cons (org-autotask-list-tag gtd-list)
+        (org-autotask-list-select-char gtd-list)))
 
 (defun org-autotask--require-org-clock (&rest _args)
   "Block the command if no `org' task is clocked in."
@@ -257,19 +258,33 @@ The marker must be at the new clock position."
 
 (defun org-autotask-initialize ()
   "Initialize `org-autotask'.
-Checks `org-todo-keywords' against keyword configuration, initializes
-`org-todo-repeat-to-state', `org-enforce-todo-dependencies', and
-`org-stuck-projects'. Adds to `org-use-tag-inheritance', and `org-tag-alist'
-from the GTD list configuration and sets up clock-in automation.
-Note that multiple calls without resetting the Org variables manually first may
-result in inconsistencies."
+Checks and modifies `org' configuration:
+- `org-todo-keywords' must contain all of the `org-autotask'-configured
+  keywords.
+- `org-use-tag-inheritance' must either be t, a string that matches the
+  someday/maybe tag, or be a list. If it's a list, the tag for someday/maybe
+  will be added there.
+- `org-tag-alist' must not have anything related to contexts, projects, and
+  someday/maybe, and they will be added to it.
+
+Overwrites Org configuration variables:
+- `org-todo-repeat-to-state'
+- `org-enforce-todo-dependencies'
+- `org-stuck-projects'
+
+And set up hooks for clock-in automation.
+
+Multiple calls without resetting the Org variables first will result in
+inconsistencies."
   ;; Validate config
   (org-autotask--check-keyword-in-org-todo-keywords
    org-autotask-next-action-keyword)
   (org-autotask--check-keyword-in-org-todo-keywords org-autotask-done-keyword)
-  (org-autotask--check-keyword-in-org-todo-keywords org-autotask-cancelled-keyword)
+  (org-autotask--check-keyword-in-org-todo-keywords
+   org-autotask-cancelled-keyword)
   ;; Configure `org'
-  (let ((somedaymaybe-tag (org-autotask-list-tag org-autotask-somedaymaybe-list)))
+  (let ((somedaymaybe-tag
+         (org-autotask-list-tag org-autotask-somedaymaybe-list)))
     (cond
      ((eq org-use-tag-inheritance t)
       nil)
@@ -292,7 +307,7 @@ result in inconsistencies."
         (append (list (cons :startgroup nil))
                 (mapcar #'org-autotask--make-org-alist-cons-cell
                         (append org-autotask-contexts
-                                (list org-autotask-waitingfor-context)))
+                                (list org-autotask-waitingfor)))
                 (list (cons :endgroup nil))
                 (list (org-autotask--make-org-alist-cons-cell
                        org-autotask-project-list))
@@ -357,7 +372,7 @@ TODO(laurynas) explanation for LEVEL=2."
   (list "Non-project next actions"
         'tags-todo
         (concat (org-autotask-list-not-tag org-autotask-project-list)
-                (org-autotask-list-not-tag org-autotask-waitingfor-context)
+                (org-autotask-list-not-tag org-autotask-waitingfor)
                 (org-autotask-list-not-tag org-autotask-somedaymaybe-list)
                 "/!" org-autotask-next-action-keyword)
         `((org-use-tag-inheritance
@@ -381,7 +396,7 @@ TODO(laurynas) explanation for LEVEL=2."
          (apply #'concat (mapcar (lambda (context)
                                    (org-autotask-list-not-tag context))
                                  org-autotask-contexts))
-         (org-autotask-list-not-tag org-autotask-waitingfor-context)
+         (org-autotask-list-not-tag org-autotask-waitingfor)
          (org-autotask-list-not-tag org-autotask-project-list)
          (org-autotask-list-not-tag org-autotask-somedaymaybe-list))
         '((org-agenda-overriding-header "Contextless tasks"))))
@@ -406,7 +421,7 @@ The heading must be already created."
   "Insert a new next action waiting-for task with TITLE at point.
 The heading must be already created."
   (org-autotask--insert-item title org-autotask-next-action-keyword
-                           (org-autotask-list-tag org-autotask-waitingfor-context)))
+                             (org-autotask-list-tag org-autotask-waitingfor)))
 
 (defun org-autotask-complete-item ()
   "Mark the item (a task or a project) at point as done."

@@ -50,10 +50,10 @@
 (ert-deftest org-autotask-context-not-tag-basic ()
   "Basic test for `org-autotask-list-not-tag'."
   (org-autotask--test-fixture
-      ((org-autotask-waitingfor-context (make-org-autotask-list
-                                       :tag "@foo" :select-char ?x
-                                       :description "Waiting-for context")))
-    (should (equal (org-autotask-list-not-tag org-autotask-waitingfor-context)
+      ((org-autotask-waitingfor (make-org-autotask-list
+                                 :tag "@foo" :select-char ?x
+                                 :description "Waiting-for context")))
+    (should (equal (org-autotask-list-not-tag org-autotask-waitingfor)
                    "-@foo"))))
 
 ;; Test `org-autotask-initialize'
@@ -63,7 +63,7 @@
   (org-autotask--test-fixture
       ((org-tag-alist nil)
        (org-autotask-contexts org-autotask--test-contexts)
-       (org-autotask-waitingfor-context
+       (org-autotask-waitingfor
         (make-org-autotask-list
          :tag "@sometag" :select-char ?f :description "Waiting-for context"))
        (org-autotask-project-list
@@ -87,7 +87,7 @@
   (org-autotask--test-fixture
       ((org-tag-alist '(("@x" . ?x)))
        (org-autotask-contexts org-autotask--test-contexts)
-       (org-autotask-waitingfor-context
+       (org-autotask-waitingfor
         (make-org-autotask-list
          :tag "@anothertag" :select-char ?x :description "Waiting-for context"))
        (org-autotask-project-list
@@ -324,13 +324,13 @@
   (org-autotask--test-fixture
       ((org-autotask-project-list
         (make-org-autotask-list :tag "prj" :select-char ?p
-                              :description "Prj description"))
+                                :description "Prj description"))
        (org-autotask-somedaymaybe-list
         (make-org-autotask-list :tag "maybe" :select-char ?m
-                              :description "Maybe description"))
-       (org-autotask-waitingfor-context
+                                :description "Maybe description"))
+       (org-autotask-waitingfor
         (make-org-autotask-list :tag "wait" :select-char ?w
-                              :description "Wait context"))
+                                :description "Wait context"))
        (org-autotask-next-action-keyword "NEXT"))
     (should (equal (org-autotask-active-non-project-tasks-agenda)
                    '("Non-project next actions" tags-todo
@@ -356,18 +356,18 @@
       ((org-autotask-contexts
         (vector
          (make-org-autotask-list :tag "@home" :select-char ?h
-                               :description "At home")
+                                 :description "At home")
          (make-org-autotask-list :tag "@work" :select-char ?w
-                               :description "At work")))
-       (org-autotask-waitingfor-context
+                                 :description "At work")))
+       (org-autotask-waitingfor
         (make-org-autotask-list :tag "@wait" :select-char ?t
-                              :description "Waiting for"))
+                                :description "Waiting for"))
        (org-autotask-project-list
         (make-org-autotask-list :tag "prj" :select-char ?p
-                              :description "Projects"))
+                                :description "Projects"))
        (org-autotask-somedaymaybe-list
         (make-org-autotask-list :tag "someday" :select-char ?s
-                              :description "Someday/Maybe")))
+                                :description "Someday/Maybe")))
     (should (equal (org-autotask-contextless-tasks)
                    '(todo
                      "-@home-@work-@wait-prj-someday"
@@ -391,7 +391,7 @@
     (should (string= (org-get-heading t t) "Test title"))
     (should (string= (org-get-todo-state) org-autotask-next-action-keyword))
     (should (equal (org-get-tags) (list (org-autotask-list-tag
-                                         org-autotask-waitingfor-context))))))
+                                         org-autotask-waitingfor))))))
 
 (ert-deftest org-autotask-insert-waiting-for-next-action-reject-empty ()
   "Test that `org-autotask-insert-waiting-for-next-action' rejects empty title."
@@ -403,7 +403,7 @@
   "Test `org-autotask-insert-waiting-for-next-action' with non-default config."
   (org-autotask--buffer-test
       ((org-autotask-next-action-keyword "NEXT")
-       (org-autotask-waitingfor-context
+       (org-autotask-waitingfor
         (make-org-autotask-list
          :tag "@wait" :select-char ?f :description "Waiting-for context"))
        (org-todo-keywords
@@ -414,7 +414,7 @@
     (should (string= (org-get-heading t t) "Title text"))
     (should (string= (org-get-todo-state) org-autotask-next-action-keyword))
     (should (equal (org-get-tags) (list (org-autotask-list-tag
-                                         org-autotask-waitingfor-context))))))
+                                         org-autotask-waitingfor))))))
 
 (ert-deftest org-autotask-insert-project-basic ()
   "Basic test for `org-autotask-insert-project'."
@@ -458,7 +458,7 @@
     (should (string= (org-get-todo-state) org-autotask-done-keyword))
     (should (string= (org-get-heading t t) "Test title"))
     (should (equal (org-get-tags) (list (org-autotask-list-tag
-                                         org-autotask-waitingfor-context))))))
+                                         org-autotask-waitingfor))))))
 
 ;; Test clock-in automation
 
