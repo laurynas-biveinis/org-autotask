@@ -73,7 +73,7 @@ The tags and the selection keys will be added to as a single group to
   :group 'org-autotask
   :package-version '(org-autotask . "0.1"))
 
-(defcustom org-autotask-somedaymaybe-list
+(defcustom org-autotask-somedaymaybes
   (make-org-autotask-list :tag "somedaymaybe" :select-char ?m
                         :description "Someday/maybe")
   "The GTD someday/maybe list."
@@ -284,19 +284,19 @@ inconsistencies."
    org-autotask-cancelled-keyword)
   ;; Configure `org'
   (let ((somedaymaybe-tag
-         (org-autotask-list-tag org-autotask-somedaymaybe-list)))
+         (org-autotask-list-tag org-autotask-somedaymaybes)))
     (cond
      ((eq org-use-tag-inheritance t)
       nil)
      ((stringp org-use-tag-inheritance)
       (unless (string-match-p org-use-tag-inheritance somedaymaybe-tag)
         (user-error
-         "`org-autotask-somedaymaybe-list' tag %s does not match `org-use-tag-inheritance' regex %s"
+         "`org-autotask-somedaymaybes' tag %s does not match `org-use-tag-inheritance' regex %s"
          somedaymaybe-tag org-use-tag-inheritance)))
      ((listp org-use-tag-inheritance)
       (when (member somedaymaybe-tag org-use-tag-inheritance)
         (user-error
-         "`org-autotask-somedaymaybe-list' tag %s already in `org-use-tag-inheritance' %S"
+         "`org-autotask-somedaymaybes' tag %s already in `org-use-tag-inheritance' %S"
          somedaymaybe-tag org-use-tag-inheritance))
       (push somedaymaybe-tag org-use-tag-inheritance))
      (t (user-error "Don't know how handle `org-use-tag-inheritance' value %S"
@@ -312,12 +312,12 @@ inconsistencies."
                 (list (org-autotask--make-org-alist-cons-cell
                        org-autotask-projects))
                 (list (org-autotask--make-org-alist-cons-cell
-                       org-autotask-somedaymaybe-list))
+                       org-autotask-somedaymaybes))
                 org-tag-alist))
   (setq org-stuck-projects `(,(concat "+" (org-autotask-list-tag
                                            org-autotask-projects)
                                       (org-autotask-list-not-tag
-                                       org-autotask-somedaymaybe-list) "/!"
+                                       org-autotask-somedaymaybes) "/!"
                                       org-autotask-next-action-keyword)
                              (,org-autotask-next-action-keyword) nil ""))
   (add-hook 'org-clock-in-hook #'org-autotask--clock-in-actions)
@@ -331,7 +331,7 @@ inconsistencies."
 (defun org-autotask--active-todo-search (&rest gtd-lists)
   "Return an `org' search string for next actions in GTD-LISTS."
   (let ((not-somedaymaybe
-         (org-autotask-list-not-tag org-autotask-somedaymaybe-list)))
+         (org-autotask-list-not-tag org-autotask-somedaymaybes)))
     (concat (mapconcat (lambda (gtd-list)
                          (concat (org-autotask-list-tag gtd-list)
                                  not-somedaymaybe))
@@ -362,9 +362,9 @@ TODO(laurynas) example (also to README)."
 (defun org-autotask-somedaymaybe-agenda ()
   "Return an `org-agenda' command part to show someday/maybe items.
 TODO(laurynas) explanation for LEVEL=2."
-  (list (org-autotask-list-description org-autotask-somedaymaybe-list)
+  (list (org-autotask-list-description org-autotask-somedaymaybes)
         'tags-todo
-        (concat (org-autotask-list-tag org-autotask-somedaymaybe-list) "+LEVEL=2")
+        (concat (org-autotask-list-tag org-autotask-somedaymaybes) "+LEVEL=2")
         '((org-agenda-dim-blocked-tasks nil))))
 
 (defun org-autotask-active-non-project-tasks-agenda ()
@@ -373,11 +373,11 @@ TODO(laurynas) explanation for LEVEL=2."
         'tags-todo
         (concat (org-autotask-list-not-tag org-autotask-projects)
                 (org-autotask-list-not-tag org-autotask-waitingfor)
-                (org-autotask-list-not-tag org-autotask-somedaymaybe-list)
+                (org-autotask-list-not-tag org-autotask-somedaymaybes)
                 "/!" org-autotask-next-action-keyword)
         `((org-use-tag-inheritance
            '(,(org-autotask-list-tag org-autotask-projects)
-             ,(org-autotask-list-tag org-autotask-somedaymaybe-list))))))
+             ,(org-autotask-list-tag org-autotask-somedaymaybes))))))
 
 (defun org-autotask-archivable-tasks ()
   "Return an `org-agenda' command part to show archivable non-project tasks."
@@ -398,7 +398,7 @@ TODO(laurynas) explanation for LEVEL=2."
                                  org-autotask-contexts))
          (org-autotask-list-not-tag org-autotask-waitingfor)
          (org-autotask-list-not-tag org-autotask-projects)
-         (org-autotask-list-not-tag org-autotask-somedaymaybe-list))
+         (org-autotask-list-not-tag org-autotask-somedaymaybes))
         '((org-agenda-overriding-header "Contextless tasks"))))
 
 ;; Creating new tasks and completing them

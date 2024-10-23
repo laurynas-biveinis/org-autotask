@@ -48,7 +48,7 @@ list-related customization is:
 - ~org-autotask-waitingfor~: The GTD waiting-for context. Defaults to =@waitingfor= /
    =w=.
 - ~org-autotask-projects~: The GTD project list. Defaults to =project= / =p=.
-- ~org-autotask-somedaymaybe-list~: The GTD someday/maybe list. Defaults to
+- ~org-autotask-somedaymaybes~: The GTD someday/maybe list. Defaults to
   =somedaymaybe= / =m=.
 
 For actions, there are three customizable TODO entry keywords:

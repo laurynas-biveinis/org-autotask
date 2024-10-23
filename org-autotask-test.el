@@ -69,7 +69,7 @@
        (org-autotask-projects
         (make-org-autotask-list
          :tag "prj" :select-char ?c :description "Projects"))
-       (org-autotask-somedaymaybe-list
+       (org-autotask-somedaymaybes
         (make-org-autotask-list
          :tag "maybesomeday" :select-char ?d :description "Someday/maybe")))
     (org-autotask-initialize)
@@ -93,7 +93,7 @@
        (org-autotask-projects
         (make-org-autotask-list
          :tag "foo" :select-char ?f :description "Foos"))
-       (org-autotask-somedaymaybe-list
+       (org-autotask-somedaymaybes
         (make-org-autotask-list
          :tag "maybesomeday" :select-char ?d :description "Someday/maybe")))
     (org-autotask-initialize)
@@ -163,7 +163,7 @@
   "Test `org-use-tag-inheritance' matching `org-autotask-somedaymaybe-tag'."
   (org-autotask--test-fixture
       ((org-use-tag-inheritance "may.*")
-       (org-autotask-somedaymaybe-list
+       (org-autotask-somedaymaybes
         (make-org-autotask-list
          :tag "maybe" :select-char ?d :description "Someday/maybe")))
     (org-autotask-initialize)
@@ -173,7 +173,7 @@
   "Test `org-use-tag-inheritance' not matching `org-autotask-somedaymaybe-tag'."
   (org-autotask--test-fixture
       ((org-use-tag-inheritance "foo.*")
-       (org-autotask-somedaymaybe-list
+       (org-autotask-somedaymaybes
         (make-org-autotask-list
          :tag "maybe" :select-char ?d :description "Someday/maybe")))
     (should-error (org-autotask-initialize))))
@@ -182,7 +182,7 @@
   "Test adding `org-autotask-somedaymaybe-tag' to `org-use-tag-inheritance'."
   (org-autotask--test-fixture
       ((org-use-tag-inheritance '("foo" "bar"))
-       (org-autotask-somedaymaybe-list
+       (org-autotask-somedaymaybes
         (make-org-autotask-list
          :tag "somedaymaybe" :select-char ?d :description "Someday/maybe")))
     (org-autotask-initialize)
@@ -192,7 +192,7 @@
   "Test `org-use-tag-inheritance' containing `org-autotask-somedaymaybe-tag'."
   (org-autotask--test-fixture
       ((org-use-tag-inheritance '("foo" "bar"))
-       (org-autotask-somedaymaybe-list
+       (org-autotask-somedaymaybes
         (make-org-autotask-list
          :tag "foo" :select-char ?d :description "Someday/maybe")))
     (should-error (org-autotask-initialize))))
@@ -201,7 +201,7 @@
   "Test `org-use-tag-inheritance' being of unrecognized type.."
   (org-autotask--test-fixture
       ((org-use-tag-inheritance 42)
-       (org-autotask-somedaymaybe-list
+       (org-autotask-somedaymaybes
         (make-org-autotask-list
          :tag "foo" :select-char ?d :description "Someday/maybe")))
     (should-error (org-autotask-initialize))))
@@ -246,7 +246,7 @@
       ((org-autotask-projects
         (make-org-autotask-list
          :tag "prj" :select-char ?p :description "Projects"))
-       (org-autotask-somedaymaybe-list
+       (org-autotask-somedaymaybes
         (make-org-autotask-list
          :tag "someday" :select-char ?s :description "Someday/Maybe"))
        (org-autotask-next-action-keyword "NEXT")
@@ -263,7 +263,7 @@
   (org-autotask--test-fixture
       ((gtd-list (make-org-autotask-list :tag "ctx" :select-char ?c
                                          :description "ctx description"))
-       (org-autotask-somedaymaybe-list
+       (org-autotask-somedaymaybes
         (make-org-autotask-list
          :tag "oneday" :select-char ?d :description "Someday/maybe"))
        (org-autotask-next-action-keyword "DOIT")
@@ -283,7 +283,7 @@
                                          :description "ctx description"))
        (gtd-list2 (make-org-autotask-list :tag "foo" :select-char ?f
                                           :description "foo description"))
-       (org-autotask-somedaymaybe-list
+       (org-autotask-somedaymaybes
         (make-org-autotask-list :tag "maybe" :select-char ?m
                                 :description "Someday/maybe"))
        (org-autotask-next-action-keyword "DOIT")
@@ -301,10 +301,10 @@
   "Basic test for `org-autotask-agenda'."
   (org-autotask--test-fixture
       ((gtd-list (make-org-autotask-list :tag "foo" :select-char ?f
-                                       :description "Foo description"))
-       (org-autotask-somedaymaybe-list
+                                         :description "Foo description"))
+       (org-autotask-somedaymaybes
         (make-org-autotask-list :tag "maybe" :select-char ?m
-                              :description "Someday/maybe"))
+                                :description "Someday/maybe"))
        (org-autotask-next-action-keyword "DOIT"))
     (should (equal (org-autotask-agenda gtd-list)
                    '("Foo description" tags-todo "foo-maybe/!DOIT")))))
@@ -312,9 +312,9 @@
 (ert-deftest org-autotask-somedaymaybe-agenda-basic ()
   "Basic test for `org-autotask-somedaymaybe-agenda'."
   (org-autotask--test-fixture
-      ((org-autotask-somedaymaybe-list
+      ((org-autotask-somedaymaybes
         (make-org-autotask-list :tag "bar" :select-char ?b
-                              :description "Bar description")))
+                                :description "Bar description")))
     (should (equal (org-autotask-somedaymaybe-agenda)
                    '("Bar description" tags-todo "bar+LEVEL=2"
                      ((org-agenda-dim-blocked-tasks nil)))))))
@@ -325,7 +325,7 @@
       ((org-autotask-projects
         (make-org-autotask-list :tag "prj" :select-char ?p
                                 :description "Prj description"))
-       (org-autotask-somedaymaybe-list
+       (org-autotask-somedaymaybes
         (make-org-autotask-list :tag "maybe" :select-char ?m
                                 :description "Maybe description"))
        (org-autotask-waitingfor
@@ -365,7 +365,7 @@
        (org-autotask-projects
         (make-org-autotask-list :tag "prj" :select-char ?p
                                 :description "Projects"))
-       (org-autotask-somedaymaybe-list
+       (org-autotask-somedaymaybes
         (make-org-autotask-list :tag "someday" :select-char ?s
                                 :description "Someday/Maybe")))
     (should (equal (org-autotask-contextless-tasks)
