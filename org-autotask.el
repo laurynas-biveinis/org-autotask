@@ -35,11 +35,12 @@ items."
   "Get the substring for `org-agenda' blocks to exclude GTD-LIST."
   (concat "-" (org-autotask-list-tag gtd-list)))
 
-;; Customization
+;;; Customization
 (defgroup org-autotask nil
   "Configure `org-autotask'."
   :group 'org)
 
+;; Lists
 (defcustom org-autotask-contexts nil
   "GTD contexts with `org' tags, quick selection characters, and descriptions.
 The tags and the selection keys will be added to as a single group to
@@ -75,7 +76,7 @@ The tags and the selection keys will be added to as a single group to
 
 (defcustom org-autotask-somedaymaybes
   (make-org-autotask-list :tag "somedaymaybe" :select-char ?m
-                        :description "Someday/maybe")
+                          :description "Someday/maybe")
   "The GTD someday/maybe list."
   :type '(struct :tag "Someday/maybe item list."
                  (string :tag "`org Tag")
@@ -84,8 +85,8 @@ The tags and the selection keys will be added to as a single group to
   :group 'org-autotask
   :package-version '(org-autotask . "0.1"))
 
-;; Action keywords
-(defcustom org-autotask-next-action-keyword "TODO"
+;; Entry keywords
+(defcustom org-autotask-keyword-next-action "TODO"
   "The TODO entry keyword that designates a GTD next action.
 Projects also have this keyword (in addition to `org-autotask-projects' tag.) It
 must be present in `org-todo-keywords', either directly or through per-file
@@ -94,7 +95,7 @@ configuration, with an optional fast state selection character."
   :group 'org-autotask
   :package-version '(org-autotask . "0.1"))
 
-(defcustom org-autotask-done-keyword "DONE"
+(defcustom org-autotask-keyword-done "DONE"
   "The TODO entry keyword that designates a completed task or project.
 It must be present in `org-todo-keyword', either directly or thorugh per-file
 configuration, with an optional fast state selection character."
@@ -102,7 +103,7 @@ configuration, with an optional fast state selection character."
   :group 'org-autotask
   :package-version '(org-autotask . "0.1"))
 
-(defcustom org-autotask-cancelled-keyword "CANCELLED"
+(defcustom org-autotask-keyword-cancelled "CANCELLED"
   "The TODO entry keyword that designates a cancelled task or project.
 It must be present in `org-todo-keywords', either directly or through per-file
 configuration, with an optional fast state selection character."
@@ -278,10 +279,10 @@ Multiple calls without resetting the Org variables first will result in
 inconsistencies."
   ;; Validate config
   (org-autotask--check-keyword-in-org-todo-keywords
-   org-autotask-next-action-keyword)
-  (org-autotask--check-keyword-in-org-todo-keywords org-autotask-done-keyword)
+   org-autotask-keyword-next-action)
+  (org-autotask--check-keyword-in-org-todo-keywords org-autotask-keyword-done)
   (org-autotask--check-keyword-in-org-todo-keywords
-   org-autotask-cancelled-keyword)
+   org-autotask-keyword-cancelled)
   ;; Configure `org'
   (let ((somedaymaybe-tag
          (org-autotask-list-tag org-autotask-somedaymaybes)))
@@ -301,7 +302,7 @@ inconsistencies."
       (push somedaymaybe-tag org-use-tag-inheritance))
      (t (user-error "Don't know how handle `org-use-tag-inheritance' value %S"
                     org-use-tag-inheritance))))
-  (setq org-todo-repeat-to-state org-autotask-next-action-keyword)
+  (setq org-todo-repeat-to-state org-autotask-keyword-next-action)
   (setq org-enforce-todo-dependencies t)
   (setq org-tag-alist
         (append (list (cons :startgroup nil))
@@ -318,11 +319,11 @@ inconsistencies."
                                            org-autotask-projects)
                                       (org-autotask-list-not-tag
                                        org-autotask-somedaymaybes) "/!"
-                                      org-autotask-next-action-keyword)
-                             (,org-autotask-next-action-keyword) nil ""))
+                                      org-autotask-keyword-next-action)
+                             (,org-autotask-keyword-next-action) nil ""))
   (add-hook 'org-clock-in-hook #'org-autotask--clock-in-actions)
   ;; Configure `org-gcal'
-  (setq org-gcal-cancelled-todo-keyword org-autotask-cancelled-keyword)
+  (setq org-gcal-cancelled-todo-keyword org-autotask-keyword-cancelled)
   ;; Set up clock gating for commands
   (dolist (cmd org-autotask-clock-gated-commands)
     (advice-add cmd :before #'org-autotask--require-org-clock)))
@@ -336,7 +337,7 @@ inconsistencies."
                          (concat (org-autotask-list-tag gtd-list)
                                  not-somedaymaybe))
                        gtd-lists "|")
-            "/!" org-autotask-next-action-keyword)))
+            "/!" org-autotask-keyword-next-action)))
 
 (defun org-autotask-agenda-block (gtd-lists &optional header)
   "Return a `tags-todo' block for GTD-LISTS with optional HEADER.
@@ -374,7 +375,7 @@ TODO(laurynas) explanation for LEVEL=2."
         (concat (org-autotask-list-not-tag org-autotask-projects)
                 (org-autotask-list-not-tag org-autotask-waitingfor)
                 (org-autotask-list-not-tag org-autotask-somedaymaybes)
-                "/!" org-autotask-next-action-keyword)
+                "/!" org-autotask-keyword-next-action)
         `((org-use-tag-inheritance
            '(,(org-autotask-list-tag org-autotask-projects)
              ,(org-autotask-list-tag org-autotask-somedaymaybes))))))
@@ -383,7 +384,7 @@ TODO(laurynas) explanation for LEVEL=2."
   "Return an `org-agenda' command part to show archivable non-project tasks."
   (list 'tags
         (concat (org-autotask-list-not-tag org-autotask-projects) "/+"
-                org-autotask-done-keyword "|+" org-autotask-cancelled-keyword)
+                org-autotask-keyword-done "|+" org-autotask-keyword-cancelled)
         `((org-agenda-overriding-header "Archivable tasks")
           (org-use-tag-inheritance '(,(org-autotask-list-tag
                                        org-autotask-projects))))))
@@ -414,18 +415,18 @@ The heading must be already created."
 (defun org-autotask-insert-project (title)
   "Insert a new project task with TITLE at point.
 The heading must be already created."
-  (org-autotask--insert-item title org-autotask-next-action-keyword
+  (org-autotask--insert-item title org-autotask-keyword-next-action
                              (org-autotask-list-tag org-autotask-projects)))
 
 (defun org-autotask-insert-waiting-for-next-action (title)
   "Insert a new next action waiting-for task with TITLE at point.
 The heading must be already created."
-  (org-autotask--insert-item title org-autotask-next-action-keyword
+  (org-autotask--insert-item title org-autotask-keyword-next-action
                              (org-autotask-list-tag org-autotask-waitingfor)))
 
 (defun org-autotask-complete-item ()
   "Mark the item (a task or a project) at point as done."
-  (org-todo org-autotask-done-keyword))
+  (org-todo org-autotask-keyword-done))
 
 ;; TODO(laurynas): What constitutes a project?
 

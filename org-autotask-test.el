@@ -107,38 +107,38 @@
                      ("maybesomeday" . ?d)
                      ("@x" . ?x))))))
 
-(ert-deftest org-autotask-next-action-keyword-not-in-org-todo-keywords ()
+(ert-deftest org-autotask-keyword-next-action-not-in-org-todo-keywords ()
   "Test that the next action keyword must be present in `org-todo-keywords'."
-  (org-autotask--test-fixture ((org-autotask-next-action-keyword "ABSENT"))
+  (org-autotask--test-fixture ((org-autotask-keyword-next-action "ABSENT"))
     (should-error (org-autotask-initialize))))
 
-(ert-deftest org-autotask-next-action-keyword-without-selection-char-ok ()
+(ert-deftest org-autotask-keyword-next-action-without-selection-char-ok ()
   "Test that the next action keyword is accepted without the selection char."
-  (org-autotask--test-fixture ((org-autotask-next-action-keyword "TODO"))
+  (org-autotask--test-fixture ((org-autotask-keyword-next-action "TODO"))
     (org-autotask-initialize)))
 
-(ert-deftest org-autotask-next-action-keyword-absent-but-prefix ()
+(ert-deftest org-autotask-keyword-next-action-absent-but-prefix ()
   "Test that the absent NA keyword is diagnosed when it's a prefix."
   (org-autotask--test-fixture
-      ((org-autotask-next-action-keyword "TODO")
+      ((org-autotask-keyword-next-action "TODO")
        (org-todo-keywords
         '((sequence "TODONE(t!)" "|" "CANCELLED(c!)" "DONE(d!)"))))
     (should-error (org-autotask-initialize))))
 
-(ert-deftest org-autotask-done-keyword-not-in-org-todo-keywords ()
+(ert-deftest org-autotask-keyword-done-not-in-org-todo-keywords ()
   "Test that the completed keyword must be present in `org-todo-keywords'."
-  (org-autotask--test-fixture ((org-autotask-done-keyword "ABSENT"))
+  (org-autotask--test-fixture ((org-autotask-keyword-done "ABSENT"))
     (should-error (org-autotask-initialize))))
 
-(ert-deftest org-autotask-done-keyword-without-selection-char-ok ()
+(ert-deftest org-autotask-keyword-done-without-selection-char-ok ()
   "Test that the completed keyword is accepted without the selection char."
-  (org-autotask--test-fixture ((org-autotask-done-keyword "DONE"))
+  (org-autotask--test-fixture ((org-autotask-keyword-done "DONE"))
     (org-autotask-initialize)))
 
-(ert-deftest org-autotask-done-keyword-absent-but-prefix ()
+(ert-deftest org-autotask-keyword-done-absent-but-prefix ()
   "Test that the absent done keyword is diagnosed when it's a prefix."
   (org-autotask--test-fixture
-      ((org-autotask-done-keyword "DONE")
+      ((org-autotask-keyword-done "DONE")
        (org-todo-keywords '((sequence "TODO(t!)" "|" "CANCELLED(c!)"
                                       "DONEANDDONE(d!)"))))
     (should-error (org-autotask-initialize))))
@@ -146,12 +146,12 @@
 (ert-deftest org-autotask-org-todo-repeat-to-state ()
   "Test that `org-todo-repeat-to-state' is initialized correctly."
   (org-autotask--test-fixture
-      ((org-autotask-next-action-keyword "TODO")
+      ((org-autotask-keyword-next-action "TODO")
        (org-todo-repeat-to-state nil)
        (org-todo-keywords
         '((sequence "TODO(t!)" "|" "DONE(d!)" "CANCELLED(c!)"))))
     (org-autotask-initialize)
-    (should (equal org-todo-repeat-to-state org-autotask-next-action-keyword))))
+    (should (equal org-todo-repeat-to-state org-autotask-keyword-next-action))))
 
 (ert-deftest org-autotask-org-use-tag-inheritance-t ()
   "Test `org-use-tag-inheritance' when it's t."
@@ -206,20 +206,20 @@
          :tag "foo" :select-char ?d :description "Someday/maybe")))
     (should-error (org-autotask-initialize))))
 
-(ert-deftest org-autotask-cancelled-keyword-not-in-org-todo-keywords ()
+(ert-deftest org-autotask-keyword-cancelled-not-in-org-todo-keywords ()
   "Test that the cancelled keyword must be present in `org-todo-keywords'."
-  (org-autotask--test-fixture ((org-autotask-cancelled-keyword "ABSENT"))
+  (org-autotask--test-fixture ((org-autotask-keyword-cancelled "ABSENT"))
     (should-error (org-autotask-initialize))))
 
-(ert-deftest org-autotask-cancelled-keyword-without-selection-char-ok ()
+(ert-deftest org-autotask-keyword-cancelled-without-selection-char-ok ()
   "Test that the cancelled keyword is accepted without the selection char."
-  (org-autotask--test-fixture ((org-autotask-cancelled-keyword "CANCELLED"))
+  (org-autotask--test-fixture ((org-autotask-keyword-cancelled "CANCELLED"))
     (org-autotask-initialize)))
 
-(ert-deftest org-autotask-cancelled-keyword-absent-but-prefix ()
+(ert-deftest org-autotask-keyword-cancelled-absent-but-prefix ()
   "Test that the absent cancelled keyword is diagnosed when it's a prefix."
   (org-autotask--test-fixture
-      ((org-autotask-cancelled-keyword "KILL")
+      ((org-autotask-keyword-cancelled "KILL")
        (org-todo-keywords '((sequence "TODO(t!)" "|" "DONE(d!)" "KILLED(k!)"))))
     (should-error (org-autotask-initialize))))
 
@@ -233,12 +233,12 @@
 (ert-deftest org-autotask-org-gcal-cancelled-todo-keyword ()
   "Test that `org-gcal-cancelled-todo-keyword' is initialized correctly."
   (org-autotask--test-fixture
-      ((org-autotask-cancelled-keyword "KILL")
+      ((org-autotask-keyword-cancelled "KILL")
        (org-todo-keywords '((sequence "TODO" "|" "DONE" "KILL")))
        (org-gcal-cancelled-todo-keyword nil))
     (org-autotask-initialize)
     (should (equal org-gcal-cancelled-todo-keyword
-                   org-autotask-cancelled-keyword))))
+                   org-autotask-keyword-cancelled))))
 
 (ert-deftest org-autotask-initialize-org-stuck-projects ()
   "Test that `org-stuck-projects' is properly initialized."
@@ -249,7 +249,7 @@
        (org-autotask-somedaymaybes
         (make-org-autotask-list
          :tag "someday" :select-char ?s :description "Someday/Maybe"))
-       (org-autotask-next-action-keyword "NEXT")
+       (org-autotask-keyword-next-action "NEXT")
        (org-todo-keywords
         '((sequence "NEXT(n!)" "|" "DONE(d!)" "CANCELLED(c!)"))))
     (org-autotask-initialize)
@@ -266,7 +266,7 @@
        (org-autotask-somedaymaybes
         (make-org-autotask-list
          :tag "oneday" :select-char ?d :description "Someday/maybe"))
-       (org-autotask-next-action-keyword "DOIT")
+       (org-autotask-keyword-next-action "DOIT")
        (org-todo-keywords
         '((sequence "DOIT(t!)" "|" "DONE(d!)" "CANCELLED(c!)"))))
     (org-autotask-initialize)
@@ -286,7 +286,7 @@
        (org-autotask-somedaymaybes
         (make-org-autotask-list :tag "maybe" :select-char ?m
                                 :description "Someday/maybe"))
-       (org-autotask-next-action-keyword "DOIT")
+       (org-autotask-keyword-next-action "DOIT")
        (org-todo-keywords
         '((sequence "DOIT(t!)" "|" "DONE(d!)" "CANCELLED(c!)"))))
     (org-autotask-initialize)
@@ -305,7 +305,7 @@
        (org-autotask-somedaymaybes
         (make-org-autotask-list :tag "maybe" :select-char ?m
                                 :description "Someday/maybe"))
-       (org-autotask-next-action-keyword "DOIT"))
+       (org-autotask-keyword-next-action "DOIT"))
     (should (equal (org-autotask-agenda gtd-list)
                    '("Foo description" tags-todo "foo-maybe/!DOIT")))))
 
@@ -331,7 +331,7 @@
        (org-autotask-waitingfor
         (make-org-autotask-list :tag "wait" :select-char ?w
                                 :description "Wait context"))
-       (org-autotask-next-action-keyword "NEXT"))
+       (org-autotask-keyword-next-action "NEXT"))
     (should (equal (org-autotask-active-non-project-tasks-agenda)
                    '("Non-project next actions" tags-todo
                      "-prj-wait-maybe/!NEXT"
@@ -343,8 +343,8 @@
       ((org-autotask-projects
         (make-org-autotask-list :tag "prj" :select-char ?p
                                 :description "Prj description"))
-       (org-autotask-done-keyword "COMPLETED")
-       (org-autotask-cancelled-keyword "KILL"))
+       (org-autotask-keyword-done "COMPLETED")
+       (org-autotask-keyword-cancelled "KILL"))
     (should (equal (org-autotask-archivable-tasks)
                    '(tags "-prj/+COMPLETED|+KILL"
                           ((org-agenda-overriding-header "Archivable tasks")
@@ -389,7 +389,7 @@
     (org-insert-todo-heading-respect-content)
     (org-autotask-insert-waiting-for-next-action "Test title")
     (should (string= (org-get-heading t t) "Test title"))
-    (should (string= (org-get-todo-state) org-autotask-next-action-keyword))
+    (should (string= (org-get-todo-state) org-autotask-keyword-next-action))
     (should (equal (org-get-tags) (list (org-autotask-list-tag
                                          org-autotask-waitingfor))))))
 
@@ -402,7 +402,7 @@
 (ert-deftest org-autotask-insert-waiting-for-next-action-custom-state-tag ()
   "Test `org-autotask-insert-waiting-for-next-action' with non-default config."
   (org-autotask--buffer-test
-      ((org-autotask-next-action-keyword "NEXT")
+      ((org-autotask-keyword-next-action "NEXT")
        (org-autotask-waitingfor
         (make-org-autotask-list
          :tag "@wait" :select-char ?f :description "Waiting-for context"))
@@ -412,7 +412,7 @@
     (org-insert-todo-heading-respect-content)
     (org-autotask-insert-waiting-for-next-action "Title text")
     (should (string= (org-get-heading t t) "Title text"))
-    (should (string= (org-get-todo-state) org-autotask-next-action-keyword))
+    (should (string= (org-get-todo-state) org-autotask-keyword-next-action))
     (should (equal (org-get-tags) (list (org-autotask-list-tag
                                          org-autotask-waitingfor))))))
 
@@ -422,7 +422,7 @@
     (org-insert-todo-heading-respect-content)
     (org-autotask-insert-project "Test title")
     (should (string= (org-get-heading t t) "Test title"))
-    (should (string= (org-get-todo-state) org-autotask-next-action-keyword))
+    (should (string= (org-get-todo-state) org-autotask-keyword-next-action))
     (should (equal (org-get-tags) (list (org-autotask-list-tag
                                          org-autotask-projects))))))
 
@@ -435,7 +435,7 @@
 (ert-deftest org-autotask-insert-project-custom-state-tag ()
   "Test `org-autotask-insert-project' with non-default config."
   (org-autotask--buffer-test
-      ((org-autotask-next-action-keyword "FOO")
+      ((org-autotask-keyword-next-action "FOO")
        (org-autotask-projects
         (make-org-autotask-list
          :tag "bar" :select-char ?b :description "Bars"))
@@ -444,7 +444,7 @@
     (org-insert-todo-heading-respect-content)
     (org-autotask-insert-project "Title text")
     (should (string= (org-get-heading t t) "Title text"))
-    (should (string= (org-get-todo-state) org-autotask-next-action-keyword))
+    (should (string= (org-get-todo-state) org-autotask-keyword-next-action))
     (should (equal (org-get-tags) (list (org-autotask-list-tag
                                          org-autotask-projects))))))
 
@@ -453,9 +453,9 @@
   (org-autotask--buffer-test ()
     (org-insert-todo-heading-respect-content)
     (org-autotask-insert-waiting-for-next-action "Test title")
-    (should (string= (org-get-todo-state) org-autotask-next-action-keyword))
+    (should (string= (org-get-todo-state) org-autotask-keyword-next-action))
     (org-autotask-complete-item)
-    (should (string= (org-get-todo-state) org-autotask-done-keyword))
+    (should (string= (org-get-todo-state) org-autotask-keyword-done))
     (should (string= (org-get-heading t t) "Test title"))
     (should (equal (org-get-tags) (list (org-autotask-list-tag
                                          org-autotask-waitingfor))))))

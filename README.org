@@ -14,9 +14,10 @@ TODO
 
 - A /list/ is a collection of items, task or otherwise, as in GTD. A list
   has an Org tag for its items, a quick selection character, and a description.
-- A /context/ is a place where some TODO items, but not others, can be done. An item
-  can belong to only one context. Items are assigned to contexts with Org tags. One
-  special context is "waiting-for" for tasks that somebody else have to complete.
+- A /context/ is a place where some TODO items, but not necessarily others, can be
+  done. An item can belong to only one context. Items are assigned to contexts with
+  Org tags. One special context is "waiting-for" for tasks that somebody else have to
+  complete.
 - A /project/ contains items (subprojects or TODO items) in its subtree. It is tagged
   with the configurable project list-specific tag and also has a TODO entry keyword.
 - /Someday-maybe/ items are tagged with their category tag, which is configured to be
@@ -52,11 +53,11 @@ list-related customization is:
   =somedaymaybe= / =m=.
 
 For actions, there are three customizable TODO entry keywords:
-- ~org-autotask-next-action-keyword~: The keyword for the next action (in the GTD
+- ~org-autotask-keyword-next-action~: The keyword for the next action (in the GTD
   sense). Active projects have this keyword too. Defaults to =TODO=
-- ~org-autotask-done-keyword~: The keyword for a completed task or project. Defaults to
+- ~org-autotask-keyword-done~: The keyword for a completed task or project. Defaults to
   =DONE=.
-- ~org-autotask-cancelled-keyword~: The keyword for a cancelled task or project.
+- ~org-autotask-keyword-cancelled~: The keyword for a cancelled task or project.
   Defaults to =CANCELLED=.
 
 For clocking automation:
