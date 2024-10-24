@@ -8,7 +8,23 @@ automation, for clocking and writing own ones in Elisp. Assumes familiarity with
 
 * Example
 
-TODO
+TODO minimum config and agendas
+
+On clocking-in any of the tasks below, the action in their properties will be
+executed:
+
+#+BEGIN_SRC org
+* TODO Do something at example.com                                          :@online:
+:PROPERTIES:
+:URL: https://example.com
+:END:
+
+* TODO Do something at two websites                                         :@online:
+:PROPERTIES:
+:URL: https://1.example.com
+:URL+: https://2.example.com
+:END:
+#+END_SRC
 
 * Concepts
 
@@ -54,17 +70,19 @@ list-related customization is:
 
 For actions, there are three customizable TODO entry keywords:
 - ~org-autotask-keyword-next-action~: The keyword for the next action (in the GTD
-  sense). Active projects have this keyword too. Defaults to =TODO=
-- ~org-autotask-keyword-done~: The keyword for a completed task or project. Defaults to
-  =DONE=.
+  sense). Active projects have this keyword too. Defaults to =TODO=.
+- ~org-autotask-keyword-done~: The keyword for a completed task or project. Defaults
+  to =DONE=.
 - ~org-autotask-keyword-cancelled~: The keyword for a cancelled task or project.
   Defaults to =CANCELLED=.
 
 For clocking automation:
 - ~org-autotask-clock-gated-commands~: A list of commands, which may only be invoked
   with an Org clock running.
-- ~org-autotask-clock-in-actions~: a list of plists configuring automatic actions to be
-  executed on clocking-in the node that has one of the configured properties.
+- ~org-autotask-clock-in-actions~: a list of plists configuring automatic actions to
+  be executed on clocking-in the node that has one of the configured properties. The
+  pre-configured ones are ~URL~, ~APP~, ~SHELL~, ~VISIT~, & ~EVAL~ as shown in the
+  example above.
 
 * Usage
 

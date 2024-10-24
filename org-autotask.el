@@ -36,11 +36,13 @@ items."
   (concat "-" (org-autotask-list-tag gtd-list)))
 
 ;;; Customization
+
 (defgroup org-autotask nil
   "Configure `org-autotask'."
   :group 'org)
 
 ;; Lists
+
 (defcustom org-autotask-contexts nil
   "GTD contexts with `org' tags, quick selection characters, and descriptions.
 The tags and the selection keys will be added to as a single group to
@@ -86,8 +88,9 @@ The tags and the selection keys will be added to as a single group to
   :package-version '(org-autotask . "0.1"))
 
 ;; Entry keywords
+
 (defcustom org-autotask-keyword-next-action "TODO"
-  "The TODO entry keyword that designates a GTD next action.
+  "The TODO entry keyword that designates a next action.
 Projects also have this keyword (in addition to `org-autotask-projects' tag.) It
 must be present in `org-todo-keywords', either directly or through per-file
 configuration, with an optional fast state selection character."
@@ -121,10 +124,10 @@ configuration, with an optional fast state selection character."
 
 (defcustom org-autotask-clock-in-actions
   '((:property "URL" :action browse-url :multi t)
-    (:property "APP" :action org-autotask--clock-in-open-macos-app)
+    (:property "APP" :action org-autotask-clock-in-open-macos-app)
     (:property "SHELL" :action shell-command)
-    (:property "VISIT" :action org-autotask--clock-in-visit-file)
-    (:property "EVAL" :action org-autotask--clock-in-eval-elisp))
+    (:property "VISIT" :action org-autotask-clock-in-visit-file)
+    (:property "EVAL" :action org-autotask-clock-in-eval))
   "Configuration for actions to perform when clocking in.
 Each entry is a plist with `:property', `:action', and optionally `:multi' keys.
 `:property' is the name of the Org property to look for.
@@ -139,16 +142,18 @@ property."
   :group 'org-autotask
   :package-version '(org-autotask . "0.1"))
 
-(defun org-autotask--clock-in-open-macos-app (app)
+;; Clocking automation actions
+
+(defun org-autotask-clock-in-open-macos-app (app)
   "Open APP on macOS."
   (shell-command (concat "open -a " app)))
 
-(defun org-autotask--clock-in-visit-file (file)
+(defun org-autotask-clock-in-visit-file (file)
   "Visit FILE and move to the end."
   (find-file file)
   (goto-char (point-max)))
 
-(defun org-autotask--clock-in-eval-elisp (code)
+(defun org-autotask-clock-in-eval (code)
   "Evaluate Elisp CODE."
   (eval (read code)))
 
