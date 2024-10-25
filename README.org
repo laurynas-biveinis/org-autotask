@@ -8,10 +8,55 @@ automation, for clocking and writing own ones in Elisp. Assumes familiarity with
 
 * Example
 
-TODO minimum config and agendas
+A sample minimum configuration using the defaults. Note that it might be useful to
+store the individual contexts in variables instead of calling
+~make-org-autotask-list~ directly under ~vector~ if you want to refer to the specific
+contexts while building agendas:
 
-On clocking-in any of the tasks below, the action in their properties will be
-executed:
+#+BEGIN_SRC emacs-lisp
+(setq org-autotask-contexts
+      (vector (make-org-autotask-list :tag "@online" :select-char ?i
+                                      :description "Online tasks")
+              (make-org-autotask-list :tag "@home" :select-char ?h
+                                      :description "Tasks at home")
+              (make-org-autotask-list :tag "@office" :select-char ?o
+                                      :description "Tasks at office")))
+(setq org-tag-alist '(("tag" . ?t)))
+(setq org-use-tag-inheritance '("tag"))
+(setq org-todo-keywords
+      '(sequence "TODO(t!)" "|" "DONE(d!)" "CANCELLED(c!)"))
+(org-autotask-initialize)
+#+END_SRC
+
+results in
+
+#+BEGIN_SRC emacs-lisp
+(symbol-value 'org-use-tag-inheritance)
+  ("somedaymaybe" "tag")
+(symbol-value 'org-tag-alist)
+  ((:startgroup)
+   ("@online" . ?i) ("@home" . ?h) ("@office" . ?o) ("@waitingfor" . ?w)
+   (:endgroup)
+   ("project" . ?p) ("somedaymaybe" . ?m) ("tag" . ?t))
+(symbol-value 'org-todo-repeat-to-state)
+  "TODO"
+(symbol-value 'org-todo-enforce-todo-dependencies)
+  t
+(symbol-value 'org-stuck-projects)
+  ("+project-somedaymaybe/!TODO" ("TODO") nil "")
+#+END_SRC
+
+Org agenda building block helpers can be used as follows:
+#+BEGIN_SRC emacs-lisp
+(setq org-agenda-custom-commands
+      `(("i" , @(org-autotask-agenda ))))
+#+END_SRC
+
+With default ~org-autotask-clock-in-actions~, on clocking-in any of the tasks below,
+the actions in their properties will be executed. Naturally, only Org files you trust
+should be clocked in, because they can run arbitrary code. Each property can only be
+given once, except for the ~:URL:~ one. If adding new properties to the customization
+variable, multiple-value ones are specified by ~:multi~ key.
 
 #+BEGIN_SRC org
 * TODO Do something at example.com                                          :@online:
@@ -23,6 +68,32 @@ executed:
 :PROPERTIES:
 :URL: https://1.example.com
 :URL+: https://2.example.com
+:END:
+
+* TODO Play macOS chess                                                       :@home:
+:PROPERTIES:
+:APP: Chess.app
+:END:
+
+* TODO Lock screen and do something away from the computer :@home:
+:PROPERTIES:
+:SHELL: pmset displaysleepnow
+:END:
+
+* TODO Work on a certain file in Emacs                                      :@office:
+:PROPERTIES:
+:VISIT: /path/to/file
+:END:
+
+* TODO Work on something that is called by Elisp                            :@office:
+:PROPERTIES:
+:EVAL: (my-work)
+:END:
+
+* TODO Combine two actions                                                  :@office:
+:PROPERTIES:
+:URL: https://example.com
+:VISIT: /peth/to/file
 :END:
 #+END_SRC
 
