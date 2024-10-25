@@ -146,6 +146,7 @@ property."
 
 (defun org-autotask-clock-in-open-macos-app (app)
   "Open APP on macOS."
+  ;; FIXME(laurynas): add OS check
   (shell-command (concat "open -a " app)))
 
 (defun org-autotask-clock-in-visit-file (file)
