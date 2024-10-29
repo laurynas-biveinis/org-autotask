@@ -337,15 +337,15 @@
                      "-prj-wait-maybe/!NEXT"
                      ((org-use-tag-inheritance '("prj" "maybe"))))))))
 
-(ert-deftest org-autotask-archivable-tasks-basic ()
-  "Basic test for `org-autotask-archivable-tasks'."
+(ert-deftest org-autotask-agenda-archivable-tasks-basic ()
+  "Basic test for `org-autotask-agenda-archivable-tasks'."
   (org-autotask--test-fixture
       ((org-autotask-projects
         (make-org-autotask-list :tag "prj" :select-char ?p
                                 :description "Prj description"))
        (org-autotask-keyword-done "COMPLETED")
        (org-autotask-keyword-cancelled "KILL"))
-    (should (equal (org-autotask-archivable-tasks)
+    (should (equal (org-autotask-agenda-archivable-tasks)
                    '(tags "-prj/+COMPLETED|+KILL"
                           ((org-agenda-overriding-header "Archivable tasks")
                            (org-use-tag-inheritance '("prj"))))))))

@@ -386,7 +386,7 @@ TODO(laurynas) explanation for LEVEL=2."
            '(,(org-autotask-list-tag org-autotask-projects)
              ,(org-autotask-list-tag org-autotask-somedaymaybes))))))
 
-(defun org-autotask-archivable-tasks ()
+(defun org-autotask-agenda-archivable-tasks ()
   "Return an `org-agenda' command part to show archivable non-project tasks."
   (list 'tags
         (concat (org-autotask-list-not-tag org-autotask-projects) "/+"

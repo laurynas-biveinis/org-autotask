@@ -58,7 +58,7 @@ Org agenda building block helpers can be used as follows:
           ,(org-autotask-agenda-block (list my-home-context my-office-context)
                                       "At home and at office")
           ,(org-autotask-agenda-block org-autotask-waitingfor-context)
-          ,(org-autotask-archivable-tasks)
+          ,(org-autotask-agenda-archivable-tasks)
           ,(org-autotask-contextless-tasks)))))
 #+END_SRC
 
@@ -182,10 +182,10 @@ There are a few functions that can be used in ~org-agenda-custom-commands~:
   for a single ~org-agenda-custom-commands~ entry.
 - ~org-autotask-agenda-somedaymaybe~: return a sublist for a single custom command
   entry for the someday/maybe items.
-- ~org-autotask-active-project-tasks-agenda~: return a sublist for active next actions
-  that are not under any project.
-- ~org-autotask-archivable-tasks~: return a ~tags~ form to be included in a custom
-  agenda view that shows completed items which are not under any project.
+- ~org-autotask-agenda-active-non-project-tasks~: return a sublist for active next
+  actions that are not under any project.
+- ~org-autotask-agenda-archivable-tasks~: return a ~tags~ form to be included in a
+  custom agenda view that shows completed items which are not under any project.
 - ~org-autotask-contextless-tasks~: return a ~tags~ form to be included in a custom
   agenda view that shows items which are not tagged with any context.
 
