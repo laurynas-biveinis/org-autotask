@@ -146,7 +146,8 @@ property."
 
 (defun org-autotask-clock-in-open-macos-app (app)
   "Open APP on macOS."
-  ;; FIXME(laurynas): add OS check
+  (unless (eq system-type 'darwin)
+    (user-error "Only supported under macOS"))
   (shell-command (concat "open -a " app)))
 
 (defun org-autotask-clock-in-visit-file (file)
