@@ -1,5 +1,7 @@
 #+TITLE: org-autotask: building agendas and Org automation
 
+[https://github.com/laurynas-biveinis/org-autotask/actions/][file:https://github.com/laurynas-biveinis/org-autotask/actions/workflows/elisp-test.yml/badge.svg]
+
 This is a set of building blocks for a task management implementation in Org
 following GTD (Getting Things Done), with focus on agenda views for contexts and
 automation, for clocking and writing own ones in Elisp. Assumes familiarity with Org.
@@ -66,6 +68,23 @@ Org agenda building block helpers can be used as follows:
           ,(org-autotask-agenda-contextless-tasks)))))
 #+END_SRC
 
+** Blocking commands unless the Org clock is running
+
+For example, to prevent using [[https://magit.vc][Magit]] if no Org clock is running, add the following
+before the ~org-gtd-initialize~ call:
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'org-autotask-clock-gated-commands #'magit-status)
+(add-to-list 'org-autotask-clock-gated-commands #'magit-commit)
+(add-to-list 'org-autotask-clock-gated-commands #'magit-push)
+(add-to-list 'org-autotask-clock-gated-commands #'magit-stage)
+(add-to-list 'org-autotask-clock-gated-commands #'magit-unstage)
+#+END_SRC
+
+Be careful not to add the clocking-in itself nor some low-level command that would
+lock you out of Emacs. To do this for your own commands, the above method still
+works, but it might be more convenient to call ~(org-autotask-require-org-clock)~
+from the command itself instead.
+
 ** Clocking automation
 
 With default ~org-autotask-clock-in-actions~, on clocking-in any of the tasks below,
@@ -119,7 +138,7 @@ variable, multiple-value ones are specified by ~:multi~ key.
   has an Org tag for its items, a quick selection character, and a description.
 - A /context/ is a place where some TODO items, but not necessarily others, can be
   done. An item can belong to only one context. Items are assigned to contexts with
-  Org tags. One special context is "waiting-for" for tasks that somebody else have to
+  Org tags. One special context is "waiting-for" for tasks that somebody else has to
   complete.
 - A /project/ contains items (subprojects or TODO items) in its subtree. It is tagged
   with the configurable project list-specific tag and also has a TODO entry keyword.
@@ -218,16 +237,12 @@ There are a few functions that can be used in ~org-agenda-custom-commands~:
 
 ** =org-gtd=
 
-=org-gtd= provides a full prescriptive GTD implementation, covering the whole
-workflow. This package, on the other hand, provides some of the building blocks to
-build your own implementation without prescribing the whole workflow.
+[[https://github.com/Trevoke/org-gtd.el][org-gtd]] is a full prescriptive GTD implementation, covering the whole workflow. This
+package, on the other hand, provides some of the building blocks to build your own
+implementation without prescribing the whole workflow.
 
 ** =org-edna=
 
-=org-edna= provides dependency management for =org= tasks for automation. While this
+[[https://www.nongnu.org/org-edna-el/][org-edna]] provides dependency management for =org= tasks for automation. While this
 package also focuses on automation, it does not focus on the dependencies much. Both
 packages can be used together.
-
-* License
-
-TODO
