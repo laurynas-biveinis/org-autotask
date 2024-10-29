@@ -525,9 +525,14 @@
       (org-autotask-initialize)
       (org-insert-todo-heading-respect-content)
       (org-set-property "APP" "TestApp")
-      (org-clock-in)
-      (org-clock-out)
-      (should (equal shell-commands '("open -a TestApp"))))))
+      (if (eq system-type 'darwin)
+          (progn
+            (org-clock-in)
+            (org-clock-out)
+            (should (equal shell-commands '("open -a TestApp"))))
+        (progn
+          (should-error (org-clock-in))
+          (should (equal shell-commands '())))))))
 
 (ert-deftest org-autotask-clock-in-actions-default-shell ()
   "Test `org-autotask-clock-in-actions' default SHELL action handler."
