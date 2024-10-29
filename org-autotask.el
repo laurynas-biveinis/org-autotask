@@ -374,7 +374,7 @@ TODO(laurynas) explanation for LEVEL=2."
         (concat (org-autotask-list-tag org-autotask-somedaymaybes) "+LEVEL=2")
         '((org-agenda-dim-blocked-tasks nil))))
 
-(defun org-autotask-active-non-project-tasks-agenda ()
+(defun org-autotask-agenda-active-non-project-tasks ()
   "Return an `org-agenda' command part to show active non-project next actions."
   (list "Non-project next actions"
         'tags-todo

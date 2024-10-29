@@ -320,7 +320,7 @@
                      ((org-agenda-dim-blocked-tasks nil)))))))
 
 (ert-deftest org-autotask-active-non-project-tasks-basic ()
-  "Basic test for `org-autotask-active-non-project-tasks-agenda'."
+  "Basic test for `org-autotask-agenda-active-non-project-tasks'."
   (org-autotask--test-fixture
       ((org-autotask-projects
         (make-org-autotask-list :tag "prj" :select-char ?p
@@ -332,7 +332,7 @@
         (make-org-autotask-list :tag "wait" :select-char ?w
                                 :description "Wait context"))
        (org-autotask-keyword-next-action "NEXT"))
-    (should (equal (org-autotask-active-non-project-tasks-agenda)
+    (should (equal (org-autotask-agenda-active-non-project-tasks)
                    '("Non-project next actions" tags-todo
                      "-prj-wait-maybe/!NEXT"
                      ((org-use-tag-inheritance '("prj" "maybe"))))))))

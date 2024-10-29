@@ -52,7 +52,7 @@ Org agenda building block helpers can be used as follows:
       `(("i" ,@(org-autotask-agenda my-online-context))
         ("p" ,@(org-autotask-agenda org-autotask-project-list))
         ("s" ,@(org-autotask-agenda-somedaymaybe))
-        ("n" ,@(org-autotask-active-non-project-tasks-agenda))
+        ("n" ,@(org-autotask-agenda-active-non-project-tasks))
         ("A" "Custom agenda"
          ((agenda "" nil)
           ,(org-autotask-agenda-block (list my-home-context my-office-context)
