@@ -1,7 +1,5 @@
 #+TITLE: org-autotask: building agendas and Org automation
 
-* Introduction
-
 This is a set of building blocks for a task management implementation in Org
 following GTD (Getting Things Done), with focus on agenda views for contexts and
 automation, for clocking and writing own ones in Elisp. Assumes familiarity with Org.
@@ -14,13 +12,15 @@ store the individual contexts in variables instead of calling
 contexts while building agendas:
 
 #+BEGIN_SRC emacs-lisp
+(defconst my-online-context
+  (make-org-autotask-list :tag "@online" :select-char ?i :description "Online tasks"))
+(defconst my-home-context
+  (make-org-autotask-list :tag "@home" :select-char ?h :description "At home"))
+(defconst my-office-context
+  (make-org-autotask-list :tag "@office" :select-char ?o :description "At office"))
 (setq org-autotask-contexts
-      (vector (make-org-autotask-list :tag "@online" :select-char ?i
-                                      :description "Online tasks")
-              (make-org-autotask-list :tag "@home" :select-char ?h
-                                      :description "Tasks at home")
-              (make-org-autotask-list :tag "@office" :select-char ?o
-                                      :description "Tasks at office")))
+  (vector my-online-context my-home-context my-office-context))
+
 (setq org-tag-alist '(("tag" . ?t)))
 (setq org-use-tag-inheritance '("tag"))
 (setq org-todo-keywords
@@ -49,7 +49,17 @@ results in
 Org agenda building block helpers can be used as follows:
 #+BEGIN_SRC emacs-lisp
 (setq org-agenda-custom-commands
-      `(("i" , @(org-autotask-agenda ))))
+      `(("i" ,@(org-autotask-agenda my-online-context))
+        ("p" ,@(org-autotask-agenda org-autotask-project-list))
+        ("s" ,@(org-autotask-agenda-somedaymaybe))
+        ("n" ,@(org-autotask-active-non-project-tasks-agenda))
+        ("A" "Custom agenda"
+         ((agenda "" nil)
+          ,(org-autotask-agenda-block (list my-home-context my-office-context)
+                                      "At home and at office")
+          ,(org-autotask-agenda-block org-autotask-waitingfor-context)
+          ,(org-autotask-archivable-tasks)
+          ,(org-autotask-contextless-tasks)))))
 #+END_SRC
 
 With default ~org-autotask-clock-in-actions~, on clocking-in any of the tasks below,
@@ -170,7 +180,7 @@ There are a few functions that can be used in ~org-agenda-custom-commands~:
   header.
 - ~org-autotask-agenda (context)~: return a sublist (everything except the leading key)
   for a single ~org-agenda-custom-commands~ entry.
-- ~org-autotask-somedaymaybe-agenda~: return a sublist for a single custom command
+- ~org-autotask-agenda-somedaymaybe~: return a sublist for a single custom command
   entry for the someday/maybe items.
 - ~org-autotask-active-project-tasks-agenda~: return a sublist for active next actions
   that are not under any project.

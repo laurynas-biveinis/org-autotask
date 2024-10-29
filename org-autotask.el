@@ -366,7 +366,7 @@ TODO(laurynas) example (also to README)."
   (list (org-autotask-list-description gtd-list) 'tags-todo
         (org-autotask--active-todo-search gtd-list)))
 
-(defun org-autotask-somedaymaybe-agenda ()
+(defun org-autotask-agenda-somedaymaybe ()
   "Return an `org-agenda' command part to show someday/maybe items.
 TODO(laurynas) explanation for LEVEL=2."
   (list (org-autotask-list-description org-autotask-somedaymaybes)
@@ -433,8 +433,6 @@ The heading must be already created."
 (defun org-autotask-complete-item ()
   "Mark the item (a task or a project) at point as done."
   (org-todo org-autotask-keyword-done))
-
-;; TODO(laurynas): What constitutes a project?
 
 (provide 'org-autotask)
 ;;; org-autotask.el ends here

@@ -309,13 +309,13 @@
     (should (equal (org-autotask-agenda gtd-list)
                    '("Foo description" tags-todo "foo-maybe/!DOIT")))))
 
-(ert-deftest org-autotask-somedaymaybe-agenda-basic ()
-  "Basic test for `org-autotask-somedaymaybe-agenda'."
+(ert-deftest org-autotask-agenda-somedaymaybe-basic ()
+  "Basic test for `org-autotask-agenda-somedaymaybe'."
   (org-autotask--test-fixture
       ((org-autotask-somedaymaybes
         (make-org-autotask-list :tag "bar" :select-char ?b
                                 :description "Bar description")))
-    (should (equal (org-autotask-somedaymaybe-agenda)
+    (should (equal (org-autotask-agenda-somedaymaybe)
                    '("Bar description" tags-todo "bar+LEVEL=2"
                      ((org-agenda-dim-blocked-tasks nil)))))))
 
