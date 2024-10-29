@@ -6,6 +6,8 @@ automation, for clocking and writing own ones in Elisp. Assumes familiarity with
 
 * Example
 
+** Minimal configuration
+
 A sample minimum configuration using the defaults. Note that it might be useful to
 store the individual contexts in variables instead of calling
 ~make-org-autotask-list~ directly under ~vector~ if you want to refer to the specific
@@ -46,6 +48,8 @@ results in
   ("+project-somedaymaybe/!TODO" ("TODO") nil "")
 #+END_SRC
 
+** Agendas
+
 Org agenda building block helpers can be used as follows:
 #+BEGIN_SRC emacs-lisp
 (setq org-agenda-custom-commands
@@ -59,8 +63,10 @@ Org agenda building block helpers can be used as follows:
                                       "At home and at office")
           ,(org-autotask-agenda-block org-autotask-waitingfor-context)
           ,(org-autotask-agenda-archivable-tasks)
-          ,(org-autotask-contextless-tasks)))))
+          ,(org-autotask-agenda-contextless-tasks)))))
 #+END_SRC
+
+** Clocking automation
 
 With default ~org-autotask-clock-in-actions~, on clocking-in any of the tasks below,
 the actions in their properties will be executed. Naturally, only Org files you trust
@@ -186,10 +192,8 @@ There are a few functions that can be used in ~org-agenda-custom-commands~:
   actions that are not under any project.
 - ~org-autotask-agenda-archivable-tasks~: return a ~tags~ form to be included in a
   custom agenda view that shows completed items which are not under any project.
-- ~org-autotask-contextless-tasks~: return a ~tags~ form to be included in a custom
-  agenda view that shows items which are not tagged with any context.
-
-TODO example
+- ~org-autotask-agenda-contextless-tasks~: return a ~tags~ form to be included in a
+  custom agenda view that shows items which are not tagged with any context.
 
 ** Elisp Automation Library
 

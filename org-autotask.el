@@ -395,8 +395,7 @@ TODO(laurynas) explanation for LEVEL=2."
           (org-use-tag-inheritance '(,(org-autotask-list-tag
                                        org-autotask-projects))))))
 
-;; FIXME(laurynas): prefix org-autotask-agenda- here and everywhere applying
-(defun org-autotask-contextless-tasks ()
+(defun org-autotask-agenda-contextless-tasks ()
   "Return an `org-agenda' command part to show listless tasks."
   (list 'todo
         (concat

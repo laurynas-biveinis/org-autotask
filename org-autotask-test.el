@@ -350,8 +350,8 @@
                           ((org-agenda-overriding-header "Archivable tasks")
                            (org-use-tag-inheritance '("prj"))))))))
 
-(ert-deftest org-autotask-contextless-tasks-basic ()
-  "Basic test for `org-autotask-contextless-tasks'."
+(ert-deftest org-autotask-agenda-contextless-tasks-basic ()
+  "Basic test for `org-autotask-agenda-contextless-tasks'."
   (org-autotask--test-fixture
       ((org-autotask-contexts
         (vector
@@ -368,7 +368,7 @@
        (org-autotask-somedaymaybes
         (make-org-autotask-list :tag "someday" :select-char ?s
                                 :description "Someday/Maybe")))
-    (should (equal (org-autotask-contextless-tasks)
+    (should (equal (org-autotask-agenda-contextless-tasks)
                    '(todo
                      "-@home-@work-@wait-prj-someday"
                      ((org-agenda-overriding-header "Contextless tasks")))))))
