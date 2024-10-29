@@ -528,11 +528,11 @@
       (if (eq system-type 'darwin)
           (progn
             (org-clock-in)
-            (org-clock-out)
             (should (equal shell-commands '("open -a TestApp"))))
         (progn
           (should-error (org-clock-in))
-          (should (equal shell-commands '())))))))
+          (should (equal shell-commands '()))))
+      (org-clock-out))))
 
 (ert-deftest org-autotask-clock-in-actions-default-shell ()
   "Test `org-autotask-clock-in-actions' default SHELL action handler."
