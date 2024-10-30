@@ -24,19 +24,31 @@
    (make-org-autotask-list
     :tag "@c2" :select-char ?b :description "c2 context")))
 
+(defconst org-autotask--test-waitingfor
+  (make-org-autotask-list :tag "@wait" :select-char ?w
+                          :description "Waiting-for context"))
+
 (defmacro org-autotask--test-fixture (varlist &rest body)
   "A test fixture for `org-autotask' to bind VARLIST vars and execute BODY forms."
   (declare (indent 1) (debug t))
-  `(let ((org-use-tag-inheritance nil)
+  `(let ((org-autotask-keyword-next-action "TODO")
+         (org-autotask-keyword-done "DONE")
+         (org-autotask-keyword-cancelled "CANCELLED")
+         (org-use-tag-inheritance nil)
          (org-todo-log-states nil)
          (org-todo-repeat-to-state nil)
+         (org-enforce-todo-dependencies nil)
+         (org-stuck-projects nil)
+         (org-gcal-cancelled-todo-keyword nil)
+         ;; FIXME(laurynas): `org-tag-alist',
+         ;; `org-autotask-clock-gated-commands'
          (org-todo-keywords
           '((sequence "TODO(t!)" "|" "DONE(d!)" "CANCELLED(c!)")))
          (org-clock-in-hook nil)
          (current-clock-marker (when (org-clocking-p)
                                  (copy-marker org-clock-marker)))
          ,@varlist)
-     (ignore org-clock-in-hook)
+     ;; (ignore org-clock-in-hook)
      (unwind-protect
          (progn
            ,@body)
@@ -50,11 +62,9 @@
 (ert-deftest org-autotask-context-not-tag-basic ()
   "Basic test for `org-autotask-list-not-tag'."
   (org-autotask--test-fixture
-      ((org-autotask-waitingfor (make-org-autotask-list
-                                 :tag "@foo" :select-char ?x
-                                 :description "Waiting-for context")))
+      ((org-autotask-waitingfor org-autotask--test-waitingfor))
     (should (equal (org-autotask-list-not-tag org-autotask-waitingfor)
-                   "-@foo"))))
+                   "-@wait"))))
 
 ;; Test `org-autotask-initialize'
 
@@ -63,9 +73,7 @@
   (org-autotask--test-fixture
       ((org-tag-alist nil)
        (org-autotask-contexts org-autotask--test-contexts)
-       (org-autotask-waitingfor
-        (make-org-autotask-list
-         :tag "@sometag" :select-char ?f :description "Waiting-for context"))
+       (org-autotask-waitingfor org-autotask--test-waitingfor)
        (org-autotask-projects
         (make-org-autotask-list
          :tag "prj" :select-char ?c :description "Projects"))
@@ -77,7 +85,7 @@
                    '((:startgroup)
                      ("@c1" . ?a)
                      ("@c2" . ?b)
-                     ("@sometag" . ?f)
+                     ("@wait" . ?w)
                      (:endgroup)
                      ("prj" . ?c)
                      ("maybesomeday" . ?d))))))
@@ -87,9 +95,7 @@
   (org-autotask--test-fixture
       ((org-tag-alist '(("@x" . ?x)))
        (org-autotask-contexts org-autotask--test-contexts)
-       (org-autotask-waitingfor
-        (make-org-autotask-list
-         :tag "@anothertag" :select-char ?x :description "Waiting-for context"))
+       (org-autotask-waitingfor org-autotask--test-waitingfor)
        (org-autotask-projects
         (make-org-autotask-list
          :tag "foo" :select-char ?f :description "Foos"))
@@ -101,7 +107,7 @@
                    '((:startgroup)
                      ("@c1" . ?a)
                      ("@c2" . ?b)
-                     ("@anothertag" . ?x)
+                     ("@wait" . ?w)
                      (:endgroup)
                      ("foo" . ?f)
                      ("maybesomeday" . ?d)
@@ -328,9 +334,7 @@
        (org-autotask-somedaymaybes
         (make-org-autotask-list :tag "maybe" :select-char ?m
                                 :description "Maybe description"))
-       (org-autotask-waitingfor
-        (make-org-autotask-list :tag "wait" :select-char ?w
-                                :description "Wait context"))
+       (org-autotask-waitingfor org-autotask--test-waitingfor)
        (org-autotask-keyword-next-action "NEXT"))
     (should (equal (org-autotask-agenda-active-non-project-tasks)
                    '("Non-project next actions" tags-todo
@@ -359,9 +363,7 @@
                                  :description "At home")
          (make-org-autotask-list :tag "@work" :select-char ?w
                                  :description "At work")))
-       (org-autotask-waitingfor
-        (make-org-autotask-list :tag "@wait" :select-char ?t
-                                :description "Waiting for"))
+       (org-autotask-waitingfor org-autotask--test-waitingfor)
        (org-autotask-projects
         (make-org-autotask-list :tag "prj" :select-char ?p
                                 :description "Projects"))
@@ -403,9 +405,7 @@
   "Test `org-autotask-insert-waiting-for-next-action' with non-default config."
   (org-autotask--buffer-test
       ((org-autotask-keyword-next-action "NEXT")
-       (org-autotask-waitingfor
-        (make-org-autotask-list
-         :tag "@wait" :select-char ?f :description "Waiting-for context"))
+       (org-autotask-waitingfor org-autotask--test-waitingfor)
        (org-todo-keywords
         '((sequence "NEXT(n!)" "|" "DONE(d!)" "CANCELLED(c!)"))))
     (org-autotask-initialize)
