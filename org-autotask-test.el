@@ -28,6 +28,9 @@
   (make-org-autotask-list :tag "@wait" :select-char ?w
                           :description "Waiting-for context"))
 
+(defconst org-autotask--test-projects
+  (make-org-autotask-list :tag "prj" :select-char ?c :description "Projects"))
+
 (defmacro org-autotask--test-fixture (varlist &rest body)
   "A test fixture for `org-autotask' to bind VARLIST vars and execute BODY forms."
   (declare (indent 1) (debug t))
@@ -73,9 +76,7 @@
       ((org-tag-alist nil)
        (org-autotask-contexts org-autotask--test-contexts)
        (org-autotask-waitingfor org-autotask--test-waitingfor)
-       (org-autotask-projects
-        (make-org-autotask-list
-         :tag "prj" :select-char ?c :description "Projects"))
+       (org-autotask-projects org-autotask--test-projects)
        (org-autotask-somedaymaybes
         (make-org-autotask-list
          :tag "maybesomeday" :select-char ?d :description "Someday/maybe")))
@@ -95,9 +96,7 @@
       ((org-tag-alist '(("@x" . ?x)))
        (org-autotask-contexts org-autotask--test-contexts)
        (org-autotask-waitingfor org-autotask--test-waitingfor)
-       (org-autotask-projects
-        (make-org-autotask-list
-         :tag "foo" :select-char ?f :description "Foos"))
+       (org-autotask-projects org-autotask--test-projects)
        (org-autotask-somedaymaybes
         (make-org-autotask-list
          :tag "maybesomeday" :select-char ?d :description "Someday/maybe")))
@@ -108,7 +107,7 @@
                      ("@c2" . ?b)
                      ("@wait" . ?w)
                      (:endgroup)
-                     ("foo" . ?f)
+                     ("prj" . ?c)
                      ("maybesomeday" . ?d)
                      ("@x" . ?x))))))
 
@@ -248,9 +247,7 @@
 (ert-deftest org-autotask-initialize-org-stuck-projects ()
   "Test that `org-stuck-projects' is properly initialized."
   (org-autotask--test-fixture
-      ((org-autotask-projects
-        (make-org-autotask-list
-         :tag "prj" :select-char ?p :description "Projects"))
+      ((org-autotask-projects org-autotask--test-projects)
        (org-autotask-somedaymaybes
         (make-org-autotask-list
          :tag "someday" :select-char ?s :description "Someday/Maybe"))
@@ -327,9 +324,7 @@
 (ert-deftest org-autotask-active-non-project-tasks-basic ()
   "Basic test for `org-autotask-agenda-active-non-project-tasks'."
   (org-autotask--test-fixture
-      ((org-autotask-projects
-        (make-org-autotask-list :tag "prj" :select-char ?p
-                                :description "Prj description"))
+      ((org-autotask-projects org-autotask--test-projects)
        (org-autotask-somedaymaybes
         (make-org-autotask-list :tag "maybe" :select-char ?m
                                 :description "Maybe description"))
@@ -343,9 +338,7 @@
 (ert-deftest org-autotask-agenda-archivable-tasks-basic ()
   "Basic test for `org-autotask-agenda-archivable-tasks'."
   (org-autotask--test-fixture
-      ((org-autotask-projects
-        (make-org-autotask-list :tag "prj" :select-char ?p
-                                :description "Prj description"))
+      ((org-autotask-projects org-autotask--test-projects)
        (org-autotask-keyword-done "COMPLETED")
        (org-autotask-keyword-cancelled "KILL"))
     (should (equal (org-autotask-agenda-archivable-tasks)
@@ -363,9 +356,7 @@
          (make-org-autotask-list :tag "@work" :select-char ?w
                                  :description "At work")))
        (org-autotask-waitingfor org-autotask--test-waitingfor)
-       (org-autotask-projects
-        (make-org-autotask-list :tag "prj" :select-char ?p
-                                :description "Projects"))
+       (org-autotask-projects org-autotask--test-projects)
        (org-autotask-somedaymaybes
         (make-org-autotask-list :tag "someday" :select-char ?s
                                 :description "Someday/Maybe")))
@@ -435,9 +426,7 @@
   "Test `org-autotask-insert-project' with non-default config."
   (org-autotask--buffer-test
       ((org-autotask-keyword-next-action "FOO")
-       (org-autotask-projects
-        (make-org-autotask-list
-         :tag "bar" :select-char ?b :description "Bars"))
+       (org-autotask-projects org-autotask--test-projects)
        (org-todo-keywords '((sequence "FOO" "|" "DONE" "CANCELLED"))))
     (org-autotask-initialize)
     (org-insert-todo-heading-respect-content)
