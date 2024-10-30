@@ -311,7 +311,7 @@
     (should (equal (org-autotask-agenda-active-non-project-tasks)
                    '("Non-project next actions" tags-todo
                      "-prj-@wait-maybesomeday/!NEXT"
-                     ((org-use-tag-inheritance '("prj" "maybe"))))))))
+                     ((org-use-tag-inheritance '("prj" "maybesomeday"))))))))
 
 (ert-deftest org-autotask-agenda-archivable-tasks-basic ()
   "Basic test for `org-autotask-agenda-archivable-tasks'."
