@@ -48,7 +48,6 @@
          (current-clock-marker (when (org-clocking-p)
                                  (copy-marker org-clock-marker)))
          ,@varlist)
-     ;; (ignore org-clock-in-hook)
      (unwind-protect
          (progn
            ,@body)
@@ -338,7 +337,7 @@
        (org-autotask-keyword-next-action "NEXT"))
     (should (equal (org-autotask-agenda-active-non-project-tasks)
                    '("Non-project next actions" tags-todo
-                     "-prj-wait-maybe/!NEXT"
+                     "-prj-@wait-maybe/!NEXT"
                      ((org-use-tag-inheritance '("prj" "maybe"))))))))
 
 (ert-deftest org-autotask-agenda-archivable-tasks-basic ()
