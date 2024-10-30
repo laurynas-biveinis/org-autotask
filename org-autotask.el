@@ -279,6 +279,7 @@ Overwrites Org configuration variables:
 - `org-todo-repeat-to-state'
 - `org-enforce-todo-dependencies'
 - `org-stuck-projects'
+- `org-gcal-cancelled-todo-keyword' for `org-gcal'
 
 And set up hooks for clock-in automation.
 
