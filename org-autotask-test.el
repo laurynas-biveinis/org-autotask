@@ -86,10 +86,9 @@
 
 (ert-deftest org-autotask-context-not-tag-basic ()
   "Basic test for `org-autotask-list-not-tag'."
-  (org-autotask--test-fixture
-      ((org-autotask-waitingfor org-autotask--test-waitingfor))
+  (org-autotask--test-fixture ()
     (should (equal (org-autotask-list-not-tag org-autotask-waitingfor)
-                   "-@wait"))))
+                   "-@waitingfor"))))
 
 ;; Test `org-autotask-initialize'
 
