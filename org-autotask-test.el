@@ -38,7 +38,7 @@
 
 (defun org-autotask--def-val (sym)
   "Get the default value for a `defcustom' SYM."
-  (car (get sym 'standard-value)))
+  (eval (car (get sym 'standard-value))))
 
 (defmacro org-autotask--test-fixture (varlist &rest body)
   "A test fixture for `org-autotask' to bind VARLIST vars and execute BODY forms."
