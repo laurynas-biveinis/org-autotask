@@ -347,15 +347,21 @@
        (org-mode)
        ,@body)))
 
+(defun org-autotask--check-heading-at-point (title todo-state tag-list)
+  "Check that `org' heading at point has TITLE, TODO-STATE, & TAG-LIST."
+  (should (string= (org-get-heading t t) title))
+  (should (string= (org-get-todo-state) todo-state))
+  (should (equal (org-get-tags) tag-list)))
+
 (ert-deftest org-autotask-insert-waiting-for-next-action-basic ()
   "Basic test for `org-autotask-insert-waiting-for-next-action'."
   (org-autotask--buffer-test ()
     (org-insert-todo-heading-respect-content)
     (org-autotask-insert-waiting-for-next-action "Test title")
-    (should (string= (org-get-heading t t) "Test title"))
-    (should (string= (org-get-todo-state) org-autotask-keyword-next-action))
-    (should (equal (org-get-tags) (list (org-autotask-list-tag
-                                         org-autotask-waitingfor))))))
+    (org-autotask--check-heading-at-point "Test title"
+                                          org-autotask-keyword-next-action
+                                          (list (org-autotask-list-tag
+                                                 org-autotask-waitingfor)))))
 
 (ert-deftest org-autotask-insert-waiting-for-next-action-reject-empty ()
   "Test that `org-autotask-insert-waiting-for-next-action' rejects empty title."
