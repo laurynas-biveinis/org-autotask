@@ -341,10 +341,10 @@
 (defmacro org-autotask--buffer-test (varlist &rest body)
   "Set up a temp `org' buffer, bind VARLIST and execute BODY in the fixture."
   (declare (indent 1) (debug t))
-  `(org-autotask--test-fixture ,varlist
-     (org-autotask-initialize)
-     (with-temp-buffer
-       (org-mode)
+  `(with-temp-buffer
+     (org-mode)
+     (org-autotask--test-fixture ,varlist
+       (org-autotask-initialize)
        ,@body)))
 
 (ert-deftest org-autotask-insert-waiting-for-next-action-basic ()
