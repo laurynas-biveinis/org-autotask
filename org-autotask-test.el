@@ -342,6 +342,7 @@
   "Set up a temp `org' buffer, bind VARLIST and execute BODY in the fixture."
   (declare (indent 1) (debug t))
   `(org-autotask--test-fixture ,varlist
+     (org-autotask-initialize)
      (with-temp-buffer
        (org-mode)
        ,@body)))
@@ -369,7 +370,6 @@
        (org-autotask-waitingfor org-autotask--test-waitingfor)
        (org-todo-keywords
         '((sequence "NEXT(n!)" "|" "DONE(d!)" "CANCELLED(c!)"))))
-    (org-autotask-initialize)
     (org-insert-todo-heading-respect-content)
     (org-autotask-insert-waiting-for-next-action "Title text")
     (should (string= (org-get-heading t t) "Title text"))
@@ -399,7 +399,6 @@
       ((org-autotask-keyword-next-action "FOO")
        (org-autotask-projects org-autotask--test-projects)
        (org-todo-keywords '((sequence "FOO" "|" "DONE" "CANCELLED"))))
-    (org-autotask-initialize)
     (org-insert-todo-heading-respect-content)
     (org-autotask-insert-project "Title text")
     (should (string= (org-get-heading t t) "Title text"))
@@ -432,7 +431,6 @@
               (:property "SHELL" :action ,action-fn)
               (:property "VISIT" :action ,action-fn)
               (:property "EVAL" :action ,action-fn))))
-      (org-autotask-initialize)
       (org-insert-todo-heading-respect-content)
       (org-set-property "URL" "http://example.com")
       (org-set-property "APP" "TestApp")
@@ -448,19 +446,18 @@
 (ert-deftest org-autotask-clock-in-actions-multi-value ()
   "Test `org-autotask--clock-in-actions' with multi-value properties."
   (org-autotask--buffer-test
-   ((actions '()))
-   (let* ((action-fn (lambda (x) (push x actions)))
-          (org-autotask-clock-in-actions
-           `((:property "URL" :action ,action-fn :multi t))))
-     (org-autotask-initialize)
-     (org-insert-todo-heading-respect-content)
-     (org-set-property "URL" "http://1.example.com")
-     (org-entry-add-to-multivalued-property (point) "URL"
-                                            "http://2.example.com")
-     (org-clock-in)
-     (org-clock-out)
-     (should (equal (reverse actions)
-                    '("http://1.example.com" "http://2.example.com"))))))
+      ((actions '()))
+    (let* ((action-fn (lambda (x) (push x actions)))
+           (org-autotask-clock-in-actions
+            `((:property "URL" :action ,action-fn :multi t))))
+      (org-insert-todo-heading-respect-content)
+      (org-set-property "URL" "http://1.example.com")
+      (org-entry-add-to-multivalued-property (point) "URL"
+                                             "http://2.example.com")
+      (org-clock-in)
+      (org-clock-out)
+      (should (equal (reverse actions)
+                     '("http://1.example.com" "http://2.example.com"))))))
 
 (ert-deftest org-autotask-clock-in-actions-default-url ()
   "Test `org-autotask-clock-in-actions' default URL action handler."
@@ -468,7 +465,6 @@
       ((url-calls '()))
     (cl-letf (((symbol-function 'browse-url)
                (lambda (url) (push url url-calls))))
-      (org-autotask-initialize)
       (org-insert-todo-heading-respect-content)
       (org-set-property "URL" "http://example.com")
       (org-clock-in)
@@ -481,7 +477,6 @@
       ((shell-commands '()))
     (cl-letf (((symbol-function 'shell-command)
                (lambda (cmd) (push cmd shell-commands))))
-      (org-autotask-initialize)
       (org-insert-todo-heading-respect-content)
       (org-set-property "APP" "TestApp")
       (if (eq system-type 'darwin)
@@ -499,7 +494,6 @@
       ((shell-commands '()))
     (cl-letf (((symbol-function 'shell-command)
                (lambda (cmd) (push cmd shell-commands))))
-      (org-autotask-initialize)
       (org-insert-todo-heading-respect-content)
       (org-set-property "SHELL" "shell with args")
       (org-clock-in)
@@ -515,7 +509,6 @@
       ((find-file-calls '()))
     (cl-letf (((symbol-function 'find-file)
                (lambda (cmd) (push cmd find-file-calls))))
-      (org-autotask-initialize)
       (org-insert-todo-heading-respect-content)
       (org-set-property "VISIT" "/tmp/path")
       (org-clock-in)
@@ -589,11 +582,10 @@
   "Test `org-autotask-clock-gated-commands' allowing commands when clocking."
   (org-autotask--buffer-test
       ((org-autotask-clock-gated-commands '(org-autotask-test--2
-                                          org-autotask-test--3))
+                                            org-autotask-test--3))
        (org-autotask-test--1-called nil)
        (org-autotask-test--2-called nil)
        (org-autotask-test--3-called nil))
-    (org-autotask-initialize)
     (unwind-protect
         (progn
           (org-insert-todo-heading-respect-content)
