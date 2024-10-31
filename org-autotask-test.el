@@ -347,11 +347,11 @@
        (org-mode)
        ,@body)))
 
-(defun org-autotask--check-heading-at-point (title todo-state tag-list)
-  "Check that `org' heading at point has TITLE, TODO-STATE, & TAG-LIST."
+(defun org-autotask--check-heading-at-point (title todo-state context)
+  "Check `org' title at point having TITLE, TODO-STATE, & is tagged for CONTEXT."
   (should (string= (org-get-heading t t) title))
   (should (string= (org-get-todo-state) todo-state))
-  (should (equal (org-get-tags) tag-list)))
+  (should (equal (org-get-tags) (list (org-autotask-list-tag context)))))
 
 (ert-deftest org-autotask-insert-waiting-for-next-action-basic ()
   "Basic test for `org-autotask-insert-waiting-for-next-action'."
@@ -360,8 +360,7 @@
     (org-autotask-insert-waiting-for-next-action "Test title")
     (org-autotask--check-heading-at-point "Test title"
                                           org-autotask-keyword-next-action
-                                          (list (org-autotask-list-tag
-                                                 org-autotask-waitingfor)))))
+                                          org-autotask-waitingfor)))
 
 (ert-deftest org-autotask-insert-waiting-for-next-action-reject-empty ()
   "Test that `org-autotask-insert-waiting-for-next-action' rejects empty title."
@@ -378,20 +377,18 @@
         '((sequence "NEXT(n!)" "|" "DONE(d!)" "CANCELLED(c!)"))))
     (org-insert-todo-heading-respect-content)
     (org-autotask-insert-waiting-for-next-action "Title text")
-    (should (string= (org-get-heading t t) "Title text"))
-    (should (string= (org-get-todo-state) org-autotask-keyword-next-action))
-    (should (equal (org-get-tags) (list (org-autotask-list-tag
-                                         org-autotask-waitingfor))))))
+    (org-autotask--check-heading-at-point "Title text"
+                                          org-autotask-keyword-next-action
+                                          org-autotask-waitingfor)))
 
 (ert-deftest org-autotask-insert-project-basic ()
   "Basic test for `org-autotask-insert-project'."
   (org-autotask--buffer-test ()
     (org-insert-todo-heading-respect-content)
     (org-autotask-insert-project "Test title")
-    (should (string= (org-get-heading t t) "Test title"))
-    (should (string= (org-get-todo-state) org-autotask-keyword-next-action))
-    (should (equal (org-get-tags) (list (org-autotask-list-tag
-                                         org-autotask-projects))))))
+    (org-autotask--check-heading-at-point "Test title"
+                                          org-autotask-keyword-next-action
+                                          org-autotask-projects)))
 
 (ert-deftest org-autotask-insert-project-reject-empty ()
   "Test that `org-autotask-insert-project' rejects empty title."
@@ -407,10 +404,9 @@
        (org-todo-keywords '((sequence "FOO" "|" "DONE" "CANCELLED"))))
     (org-insert-todo-heading-respect-content)
     (org-autotask-insert-project "Title text")
-    (should (string= (org-get-heading t t) "Title text"))
-    (should (string= (org-get-todo-state) org-autotask-keyword-next-action))
-    (should (equal (org-get-tags) (list (org-autotask-list-tag
-                                         org-autotask-projects))))))
+    (org-autotask--check-heading-at-point "Title text"
+                                          org-autotask-keyword-next-action
+                                          org-autotask-projects)))
 
 (ert-deftest org-autotask-complete-item-basic ()
   "Basic test for `my-org-complete-item'."
@@ -419,10 +415,9 @@
     (org-autotask-insert-waiting-for-next-action "Test title")
     (should (string= (org-get-todo-state) org-autotask-keyword-next-action))
     (org-autotask-complete-item)
-    (should (string= (org-get-todo-state) org-autotask-keyword-done))
-    (should (string= (org-get-heading t t) "Test title"))
-    (should (equal (org-get-tags) (list (org-autotask-list-tag
-                                         org-autotask-waitingfor))))))
+    (org-autotask--check-heading-at-point "Test title"
+                                          org-autotask-keyword-done
+                                          org-autotask-waitingfor)))
 
 ;; Test clock-in automation
 
