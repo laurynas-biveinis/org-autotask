@@ -24,6 +24,7 @@
    (make-org-autotask-list
     :tag "@c2" :select-char ?b :description "c2 context")))
 
+;; Non-default list definitions
 (defconst org-autotask--test-waitingfor
   (make-org-autotask-list :tag "@wait" :select-char ?w
                           :description "Waiting-for context"))
@@ -35,20 +36,38 @@
   (make-org-autotask-list :tag "maybesomeday" :select-char ?d
                           :description "Someday/maybe"))
 
+(defun org-autotask--def-val (sym)
+  "Get the default value for a `defcustom' SYM."
+  (car (get sym 'standard-value)))
+
 (defmacro org-autotask--test-fixture (varlist &rest body)
   "A test fixture for `org-autotask' to bind VARLIST vars and execute BODY forms."
   (declare (indent 1) (debug t))
-  `(let ((org-autotask-keyword-next-action "TODO")
-         (org-autotask-keyword-done "DONE")
-         (org-autotask-keyword-cancelled "CANCELLED")
+  `(let (
+         ;; By default, test the defaults
+         (org-autotask-contexts (org-autotask--def-val 'org-autotask-contexts))
+         (org-autotask-waitingfor
+          (org-autotask--def-val 'org-autotask-waitingfor))
+         (org-autotask-projects (org-autotask--def-val 'org-autotask-projects))
+         (org-autotask-somedaymaybes
+          (org-autotask--def-val 'org-autotask-somedaymaybes))
+         (org-autotask-keyword-next-action
+          (org-autotask--def-val 'org-autotask-keyword-next-action))
+         (org-autotask-keyword-done
+          (org-autotask--def-val 'org-autotask-keyword-done))
+         (org-autotask-keyword-cancelled
+          (org-autotask--def-val 'org-autotask-keyword-cancelled))
+         (org-autotask-clock-gated-commands
+          (org-autotask--def-val 'org-autotask-clock-gated-commands))
+         (org-autotask-clock-in-actions
+          (org-autotask--def-val 'org-autotask-clock-in-actions))
          (org-use-tag-inheritance nil)
          (org-todo-log-states nil)
          (org-todo-repeat-to-state nil)
          (org-enforce-todo-dependencies nil)
          (org-stuck-projects nil)
          (org-gcal-cancelled-todo-keyword nil)
-         ;; FIXME(laurynas): `org-tag-alist',
-         ;; `org-autotask-clock-gated-commands'
+         ;; FIXME(laurynas): `org-tag-alist'
          (org-todo-keywords
           '((sequence "TODO(t!)" "|" "DONE(d!)" "CANCELLED(c!)")))
          (org-clock-in-hook nil)
