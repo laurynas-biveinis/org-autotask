@@ -93,7 +93,7 @@
 ;; Test `org-autotask-initialize'
 
 (ert-deftest org-tag-alist-construction-empty ()
-  "Test that `org-tag-alist' is properly constructed."
+  "Test that `org-tag-alist' is properly constructed, when it's empty."
   (org-autotask--test-fixture
       ((org-tag-alist nil)
        (org-autotask-contexts org-autotask--test-contexts)
@@ -111,7 +111,7 @@
                      ("maybesomeday" . ?d))))))
 
 (ert-deftest org-tag-alist-construction-preexisting ()
-  "Test that `org-tag-alist' is properly constructed, when it's non-empty."
+  "Test that `org-tag-alist' is properly adjusted, when it's non-empty."
   (org-autotask--test-fixture
       ((org-tag-alist '(("@x" . ?x)))
        (org-autotask-contexts org-autotask--test-contexts)
@@ -134,16 +134,10 @@
   (org-autotask--test-fixture ((org-autotask-keyword-next-action "ABSENT"))
     (should-error (org-autotask-initialize))))
 
-(ert-deftest org-autotask-keyword-next-action-without-selection-char-ok ()
-  "Test that the next action keyword is accepted without the selection char."
-  (org-autotask--test-fixture ((org-autotask-keyword-next-action "TODO"))
-    (org-autotask-initialize)))
-
 (ert-deftest org-autotask-keyword-next-action-absent-but-prefix ()
   "Test that the absent NA keyword is diagnosed when it's a prefix."
   (org-autotask--test-fixture
-      ((org-autotask-keyword-next-action "TODO")
-       (org-todo-keywords
+      ((org-todo-keywords
         '((sequence "TODONE(t!)" "|" "CANCELLED(c!)" "DONE(d!)"))))
     (should-error (org-autotask-initialize))))
 
@@ -152,26 +146,16 @@
   (org-autotask--test-fixture ((org-autotask-keyword-done "ABSENT"))
     (should-error (org-autotask-initialize))))
 
-(ert-deftest org-autotask-keyword-done-without-selection-char-ok ()
-  "Test that the completed keyword is accepted without the selection char."
-  (org-autotask--test-fixture ((org-autotask-keyword-done "DONE"))
-    (org-autotask-initialize)))
-
 (ert-deftest org-autotask-keyword-done-absent-but-prefix ()
   "Test that the absent done keyword is diagnosed when it's a prefix."
   (org-autotask--test-fixture
-      ((org-autotask-keyword-done "DONE")
-       (org-todo-keywords '((sequence "TODO(t!)" "|" "CANCELLED(c!)"
+      ((org-todo-keywords '((sequence "TODO(t!)" "|" "CANCELLED(c!)"
                                       "DONEANDDONE(d!)"))))
     (should-error (org-autotask-initialize))))
 
 (ert-deftest org-autotask-org-todo-repeat-to-state ()
   "Test that `org-todo-repeat-to-state' is initialized correctly."
-  (org-autotask--test-fixture
-      ((org-autotask-keyword-next-action "TODO")
-       (org-todo-repeat-to-state nil)
-       (org-todo-keywords
-        '((sequence "TODO(t!)" "|" "DONE(d!)" "CANCELLED(c!)"))))
+  (org-autotask--test-fixture ()
     (org-autotask-initialize)
     (should (equal org-todo-repeat-to-state org-autotask-keyword-next-action))))
 
@@ -223,11 +207,6 @@
   (org-autotask--test-fixture ((org-autotask-keyword-cancelled "ABSENT"))
     (should-error (org-autotask-initialize))))
 
-(ert-deftest org-autotask-keyword-cancelled-without-selection-char-ok ()
-  "Test that the cancelled keyword is accepted without the selection char."
-  (org-autotask--test-fixture ((org-autotask-keyword-cancelled "CANCELLED"))
-    (org-autotask-initialize)))
-
 (ert-deftest org-autotask-keyword-cancelled-absent-but-prefix ()
   "Test that the absent cancelled keyword is diagnosed when it's a prefix."
   (org-autotask--test-fixture
@@ -237,8 +216,7 @@
 
 (ert-deftest org-autotask-initialize-org-enforce-todo-dependencies ()
   "Test that `org-enforce-todo-dependencies' is initialized correctly."
-  (org-autotask--test-fixture
-      ((org-enforce-todo-dependencies nil))
+  (org-autotask--test-fixture ()
     (org-autotask-initialize)
     (should (equal org-enforce-todo-dependencies t))))
 
@@ -246,8 +224,7 @@
   "Test that `org-gcal-cancelled-todo-keyword' is initialized correctly."
   (org-autotask--test-fixture
       ((org-autotask-keyword-cancelled "KILL")
-       (org-todo-keywords '((sequence "TODO" "|" "DONE" "KILL")))
-       (org-gcal-cancelled-todo-keyword nil))
+       (org-todo-keywords '((sequence "TODO" "|" "DONE" "KILL"))))
     (org-autotask-initialize)
     (should (equal org-gcal-cancelled-todo-keyword
                    org-autotask-keyword-cancelled))))
@@ -269,14 +246,14 @@
 (ert-deftest org-autotask-agenda-block-one-list ()
   "Test for `org-autotask-agenda-block' with one list."
   (org-autotask--test-fixture
-      ((gtd-list (make-org-autotask-list :tag "ctx" :select-char ?c
+      ((ctx-list (make-org-autotask-list :tag "ctx" :select-char ?c
                                          :description "ctx description"))
        (org-autotask-somedaymaybes org-autotask--test-somedaymaybe)
        (org-autotask-keyword-next-action "DOIT")
        (org-todo-keywords
         '((sequence "DOIT(t!)" "|" "DONE(d!)" "CANCELLED(c!)"))))
     (org-autotask-initialize)
-    (should (equal (org-autotask-agenda-block gtd-list)
+    (should (equal (org-autotask-agenda-block ctx-list)
                    '(tags-todo
                      "ctx-maybesomeday/!DOIT"
                      ((org-agenda-overriding-header "ctx description")
@@ -285,16 +262,16 @@
 (ert-deftest org-autotask-active-todo-search-two-lists ()
   "Test for `org-autotask-agenda-block' with two lists."
   (org-autotask--test-fixture
-      ((gtd-list (make-org-autotask-list :tag "ctx" :select-char ?c
+      ((ctx-list (make-org-autotask-list :tag "ctx" :select-char ?c
                                          :description "ctx description"))
-       (gtd-list2 (make-org-autotask-list :tag "foo" :select-char ?f
+       (ctx-list2 (make-org-autotask-list :tag "foo" :select-char ?f
                                           :description "foo description"))
        (org-autotask-somedaymaybes org-autotask--test-somedaymaybe)
        (org-autotask-keyword-next-action "DOIT")
        (org-todo-keywords
         '((sequence "DOIT(t!)" "|" "DONE(d!)" "CANCELLED(c!)"))))
     (org-autotask-initialize)
-    (should (equal (org-autotask-agenda-block (list gtd-list gtd-list2)
+    (should (equal (org-autotask-agenda-block (list ctx-list ctx-list2)
                                               "Two contexts description")
                    '(tags-todo
                      "ctx-maybesomeday|foo-maybesomeday/!DOIT"
@@ -304,11 +281,11 @@
 (ert-deftest org-autotask-agenda-basic ()
   "Basic test for `org-autotask-agenda'."
   (org-autotask--test-fixture
-      ((gtd-list (make-org-autotask-list :tag "foo" :select-char ?f
+      ((ctx-list (make-org-autotask-list :tag "foo" :select-char ?f
                                          :description "Foo description"))
        (org-autotask-somedaymaybes org-autotask--test-somedaymaybe)
        (org-autotask-keyword-next-action "DOIT"))
-    (should (equal (org-autotask-agenda gtd-list)
+    (should (equal (org-autotask-agenda ctx-list)
                    '("Foo description" tags-todo "foo-maybesomeday/!DOIT")))))
 
 (ert-deftest org-autotask-agenda-somedaymaybe-basic ()
