@@ -342,9 +342,9 @@
   "Set up a temp `org' buffer, bind VARLIST and execute BODY in the fixture."
   (declare (indent 1) (debug t))
   `(with-temp-buffer
-     (org-mode)
      (org-autotask--test-fixture ,varlist
        (org-autotask-initialize)
+       (org-mode)
        ,@body)))
 
 (ert-deftest org-autotask-insert-waiting-for-next-action-basic ()
