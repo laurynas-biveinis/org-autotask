@@ -358,13 +358,17 @@
   (org-insert-todo-heading-respect-content)
   (org-autotask-insert-waiting-for-next-action title))
 
+(defun org-autotask--insert-and-check-waitingfor-na (title)
+  "Insert a waiting-for next action with TITLE and check it."
+  (org-autotask--insert-waitingfor-na-with-heading title)
+  (org-autotask--check-heading-at-point title
+                                        org-autotask-keyword-next-action
+                                        org-autotask-waitingfor))
+
 (ert-deftest org-autotask-insert-waiting-for-next-action-basic ()
   "Basic test for `org-autotask-insert-waiting-for-next-action'."
   (org-autotask--buffer-test ()
-    (org-autotask--insert-waitingfor-na-with-heading "Test title")
-    (org-autotask--check-heading-at-point "Test title"
-                                          org-autotask-keyword-next-action
-                                          org-autotask-waitingfor)))
+    (org-autotask--insert-and-check-waitingfor-na "Test title")))
 
 (ert-deftest org-autotask-insert-waiting-for-next-action-reject-empty ()
   "Test that `org-autotask-insert-waiting-for-next-action' rejects empty title."
@@ -379,10 +383,7 @@
        (org-autotask-waitingfor org-autotask--test-waitingfor)
        (org-todo-keywords
         '((sequence "NEXT(n!)" "|" "DONE(d!)" "CANCELLED(c!)"))))
-    (org-autotask--insert-waitingfor-na-with-heading "Title text")
-    (org-autotask--check-heading-at-point "Title text"
-                                          org-autotask-keyword-next-action
-                                          org-autotask-waitingfor)))
+    (org-autotask--insert-and-check-waitingfor-na "Title text")))
 
 (ert-deftest org-autotask-insert-project-basic ()
   "Basic test for `org-autotask-insert-project'."
