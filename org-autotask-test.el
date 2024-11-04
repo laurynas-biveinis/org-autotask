@@ -365,6 +365,14 @@
                                         org-autotask-keyword-next-action
                                         org-autotask-waitingfor))
 
+(defun org-autotask--insert-and-check-project (title)
+  "Insert a project next action with TITLE and check it."
+  (org-insert-todo-heading-respect-content)
+  (org-autotask-insert-project title)
+  (org-autotask--check-heading-at-point title
+                                        org-autotask-keyword-next-action
+                                        org-autotask-projects))
+
 (ert-deftest org-autotask-insert-waiting-for-next-action-basic ()
   "Basic test for `org-autotask-insert-waiting-for-next-action'."
   (org-autotask--buffer-test ()
@@ -388,11 +396,7 @@
 (ert-deftest org-autotask-insert-project-basic ()
   "Basic test for `org-autotask-insert-project'."
   (org-autotask--buffer-test ()
-    (org-insert-todo-heading-respect-content)
-    (org-autotask-insert-project "Test title")
-    (org-autotask--check-heading-at-point "Test title"
-                                          org-autotask-keyword-next-action
-                                          org-autotask-projects)))
+    (org-autotask--insert-and-check-project "Test title")))
 
 (ert-deftest org-autotask-insert-project-reject-empty ()
   "Test that `org-autotask-insert-project' rejects empty title."
@@ -406,11 +410,7 @@
       ((org-autotask-keyword-next-action "FOO")
        (org-autotask-projects org-autotask--test-projects)
        (org-todo-keywords '((sequence "FOO" "|" "DONE" "CANCELLED"))))
-    (org-insert-todo-heading-respect-content)
-    (org-autotask-insert-project "Title text")
-    (org-autotask--check-heading-at-point "Title text"
-                                          org-autotask-keyword-next-action
-                                          org-autotask-projects)))
+    (org-autotask--insert-and-check-project "Title text")))
 
 (ert-deftest org-autotask-complete-item-basic ()
   "Basic test for `my-org-complete-item'."
