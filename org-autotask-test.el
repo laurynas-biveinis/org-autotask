@@ -353,11 +353,15 @@
   (should (string= (org-get-todo-state) todo-state))
   (should (equal (org-get-tags) (list (org-autotask-list-tag context)))))
 
+(defun org-autotask--insert-waitingfor-na-with-heading (title)
+  "Insert a heading and a waiting-for next action with TITLE."
+  (org-insert-todo-heading-respect-content)
+  (org-autotask-insert-waiting-for-next-action title))
+
 (ert-deftest org-autotask-insert-waiting-for-next-action-basic ()
   "Basic test for `org-autotask-insert-waiting-for-next-action'."
   (org-autotask--buffer-test ()
-    (org-insert-todo-heading-respect-content)
-    (org-autotask-insert-waiting-for-next-action "Test title")
+    (org-autotask--insert-waitingfor-na-with-heading "Test title")
     (org-autotask--check-heading-at-point "Test title"
                                           org-autotask-keyword-next-action
                                           org-autotask-waitingfor)))
@@ -375,8 +379,7 @@
        (org-autotask-waitingfor org-autotask--test-waitingfor)
        (org-todo-keywords
         '((sequence "NEXT(n!)" "|" "DONE(d!)" "CANCELLED(c!)"))))
-    (org-insert-todo-heading-respect-content)
-    (org-autotask-insert-waiting-for-next-action "Title text")
+    (org-autotask--insert-waitingfor-na-with-heading "Title text")
     (org-autotask--check-heading-at-point "Title text"
                                           org-autotask-keyword-next-action
                                           org-autotask-waitingfor)))
@@ -411,8 +414,7 @@
 (ert-deftest org-autotask-complete-item-basic ()
   "Basic test for `my-org-complete-item'."
   (org-autotask--buffer-test ()
-    (org-insert-todo-heading-respect-content)
-    (org-autotask-insert-waiting-for-next-action "Test title")
+    (org-autotask--insert-waitingfor-na-with-heading "Test title")
     (should (string= (org-get-todo-state) org-autotask-keyword-next-action))
     (org-autotask-complete-item)
     (org-autotask--check-heading-at-point "Test title"
