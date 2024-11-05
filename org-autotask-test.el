@@ -424,44 +424,51 @@
 
 ;; Test clock-in automation
 
+(defvar org-autotask--called-actions)
+
+(defun org-autotask--record-action (action)
+  "Record test executing ACTION."
+  (push action org-autotask--called-actions))
+
+(defmacro org-autotask--clock-in-action-test (varlist actions &rest body)
+  "A test fixture for clock-in automation.
+Variables in VARLIST are bound, BODY is executed, and invoked clock-in actions
+are compared with ACTIONS."
+  (declare (indent 2) (debug t))
+  `(org-autotask--buffer-test ((org-autotask--called-actions '())
+                               ,@varlist)
+     (org-insert-todo-heading-respect-content)
+     ,@body
+     (org-clock-in)
+     (org-clock-out)
+     (should (equal (reverse org-autotask--called-actions) ,actions))))
+
 (ert-deftest org-autotask-clock-in-actions-basic ()
   "Basic test for `org-autotask--clock-in-actions' with mock actions."
-  (org-autotask--buffer-test
-      ((actions '()))
-    (let* ((action-fn (lambda (x) (push x actions)))
-           (org-autotask-clock-in-actions
-            `((:property "URL" :action ,action-fn)
-              (:property "APP" :action ,action-fn)
-              (:property "SHELL" :action ,action-fn)
-              (:property "VISIT" :action ,action-fn)
-              (:property "EVAL" :action ,action-fn))))
-      (org-insert-todo-heading-respect-content)
-      (org-set-property "URL" "http://example.com")
-      (org-set-property "APP" "TestApp")
-      (org-set-property "SHELL" "echo test")
-      (org-set-property "VISIT" "/tmp/test.txt")
-      (org-set-property "EVAL" "(message \"test\")")
-      (org-clock-in)
-      (org-clock-out)
-      (should (equal (reverse actions)
-                     '("http://example.com" "TestApp" "echo test"
-                       "/tmp/test.txt" "(message \"test\")"))))))
+  (org-autotask--clock-in-action-test
+      ((org-autotask-clock-in-actions
+        `((:property "URL" :action org-autotask--record-action)
+          (:property "APP" :action org-autotask--record-action)
+          (:property "SHELL" :action org-autotask--record-action)
+          (:property "VISIT" :action org-autotask--record-action)
+          (:property "EVAL" :action org-autotask--record-action))))
+      '("http://example.com" "TestApp" "echo test"
+        "/tmp/test.txt" "(message \"test\")")
+    (org-set-property "URL" "http://example.com")
+    (org-set-property "APP" "TestApp")
+    (org-set-property "SHELL" "echo test")
+    (org-set-property "VISIT" "/tmp/test.txt")
+    (org-set-property "EVAL" "(message \"test\")")))
 
 (ert-deftest org-autotask-clock-in-actions-multi-value ()
   "Test `org-autotask--clock-in-actions' with multi-value properties."
-  (org-autotask--buffer-test
-      ((actions '()))
-    (let* ((action-fn (lambda (x) (push x actions)))
-           (org-autotask-clock-in-actions
-            `((:property "URL" :action ,action-fn :multi t))))
-      (org-insert-todo-heading-respect-content)
-      (org-set-property "URL" "http://1.example.com")
-      (org-entry-add-to-multivalued-property (point) "URL"
-                                             "http://2.example.com")
-      (org-clock-in)
-      (org-clock-out)
-      (should (equal (reverse actions)
-                     '("http://1.example.com" "http://2.example.com"))))))
+  (org-autotask--clock-in-action-test
+      ((org-autotask-clock-in-actions
+        `((:property "URL" :action org-autotask--record-action :multi t))))
+      '("http://1.example.com" "http://2.example.com")
+    (org-set-property "URL" "http://1.example.com")
+    (org-entry-add-to-multivalued-property (point) "URL"
+                                           "http://2.example.com")))
 
 (ert-deftest org-autotask-clock-in-actions-default-url ()
   "Test `org-autotask-clock-in-actions' default URL action handler."
