@@ -424,24 +424,24 @@
 
 ;; Test clock-in automation
 
-(defvar org-autotask--called-actions)
+(defvar org-autotask--action-call-args)
 
 (defun org-autotask--record-action (action)
   "Record test executing ACTION."
-  (push action org-autotask--called-actions))
+  (push action org-autotask--action-call-args))
 
 (defmacro org-autotask--clock-in-action-test (varlist actions &rest body)
   "A test fixture for clock-in automation.
 Variables in VARLIST are bound, BODY is executed, and invoked clock-in actions
 are compared with ACTIONS."
   (declare (indent 2) (debug t))
-  `(org-autotask--buffer-test ((org-autotask--called-actions '())
+  `(org-autotask--buffer-test ((org-autotask--action-call-args '())
                                ,@varlist)
      (org-insert-todo-heading-respect-content)
      ,@body
      (org-clock-in)
      (org-clock-out)
-     (should (equal (reverse org-autotask--called-actions) ,actions))))
+     (should (equal (reverse org-autotask--action-call-args) ,actions))))
 
 (ert-deftest org-autotask-clock-in-actions-basic ()
   "Basic test for `org-autotask--clock-in-actions' with mock actions."
@@ -470,65 +470,64 @@ are compared with ACTIONS."
     (org-entry-add-to-multivalued-property (point) "URL"
                                            "http://2.example.com")))
 
+(defmacro org-autotask--with-replaced-action-fn (property value action-fn
+                                                          &rest body)
+  "Clock-in testing harness that logs invocations of the tested ACTION-FN.
+For a test Org node, PROPERTY is set to VALUE and BODY forms are executed."
+  (declare (indent 3) (debug t))
+  `(org-autotask--buffer-test
+       ((org-autotask--action-call-args '()))
+     (cl-letf (((symbol-function ,action-fn) 'org-autotask--record-action))
+       (org-insert-todo-heading-respect-content)
+       (org-set-property ,property ,value)
+       ,@body)))
+
+(defun org-autotask--clock-in-default-action-test (property value action-fn
+                                                            expected)
+  "Test the default handler for clock-in automation.
+For a test Org node, PROPERTY is set to VALUE and clocked-in, asserting that
+ACTION-FN was called with EXPECTED arg."
+  (org-autotask--with-replaced-action-fn
+      property value action-fn
+    (org-clock-in)
+    (org-clock-out)
+    (should (equal org-autotask--action-call-args expected))))
+
 (ert-deftest org-autotask-clock-in-actions-default-url ()
   "Test `org-autotask-clock-in-actions' default URL action handler."
-  (org-autotask--buffer-test
-      ((url-calls '()))
-    (cl-letf (((symbol-function 'browse-url)
-               (lambda (url) (push url url-calls))))
-      (org-insert-todo-heading-respect-content)
-      (org-set-property "URL" "http://example.com")
-      (org-clock-in)
-      (org-clock-out)
-      (should (equal url-calls '("http://example.com"))))))
+  (org-autotask--clock-in-default-action-test
+   "URL" "http://example.com" 'browse-url '("http://example.com")))
 
 (ert-deftest org-autotask-clock-in-actions-default-app ()
   "Test `org-autotask-clock-in-actions' default APP action handler."
-  (org-autotask--buffer-test
-      ((shell-commands '()))
-    (cl-letf (((symbol-function 'shell-command)
-               (lambda (cmd) (push cmd shell-commands))))
-      (org-insert-todo-heading-respect-content)
-      (org-set-property "APP" "TestApp")
-      (if (eq system-type 'darwin)
-          (progn
-            (org-clock-in)
-            (should (equal shell-commands '("open -a TestApp"))))
+  (org-autotask--with-replaced-action-fn
+      "APP" "TestApp" 'shell-command
+    (if (eq system-type 'darwin)
         (progn
-          (should-error (org-clock-in))
-          (should (equal shell-commands '()))))
-      (org-clock-out))))
+          (org-clock-in)
+          (should (equal org-autotask--action-call-args '("open -a TestApp"))))
+      (progn
+        (should-error (org-clock-in))
+        (should (equal org-autotask--action-call-args '()))))
+    (org-clock-out)))
 
 (ert-deftest org-autotask-clock-in-actions-default-shell ()
   "Test `org-autotask-clock-in-actions' default SHELL action handler."
-  (org-autotask--buffer-test
-      ((shell-commands '()))
-    (cl-letf (((symbol-function 'shell-command)
-               (lambda (cmd) (push cmd shell-commands))))
-      (org-insert-todo-heading-respect-content)
-      (org-set-property "SHELL" "shell with args")
-      (org-clock-in)
-      (org-clock-out)
-      (should (equal shell-commands '("shell with args"))))))
+  (org-autotask--clock-in-default-action-test
+   "SHELL" "cmd with args" 'shell-command '("cmd with args")))
 
 ;; TODO(laurynas): it should be possible to test `find-file' calls directly, but
 ;; such test does not appear to work.
 ;; TODO(laurynas): buffer position is not tested
 (ert-deftest org-autotask-clock-in-actions-default-visit ()
   "Test `org-autotask-clock-in-actions' default VISIT action handler."
-  (org-autotask--buffer-test
-      ((find-file-calls '()))
-    (cl-letf (((symbol-function 'find-file)
-               (lambda (cmd) (push cmd find-file-calls))))
-      (org-insert-todo-heading-respect-content)
-      (org-set-property "VISIT" "/tmp/path")
-      (org-clock-in)
-      (org-clock-out)
-      (should (equal find-file-calls '("/tmp/path"))))))
+  (org-autotask--clock-in-default-action-test
+   "VISIT" "/tmp/path" 'find-file '("/tmp/path")))
 
-;; TODO(laurynas): add a test `org-autotask-clock-in-actions-default-eval' to test
-;; EVAL action. It should be possible to test `eval' calls directly, but such
-;; test does not appear to work, and mocking `eval' has too many side effects.
+;; TODO(laurynas): add a test `org-autotask-clock-in-actions-default-eval' to
+;; test EVAL action. It should be possible to test `eval' calls directly, but
+;; such test does not appear to work, and mocking `eval' has too many side
+;; effects.
 
 (ert-deftest org-autotask-require-clock-on ()
   "Test that `org-autotask-require-clock-on' does nothing with an active clock."
