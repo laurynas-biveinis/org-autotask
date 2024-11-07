@@ -43,37 +43,37 @@
 (defmacro org-autotask--test-fixture (varlist &rest body)
   "A test fixture for `org-autotask' to bind VARLIST vars and execute BODY forms."
   (declare (indent 1) (debug t))
-  `(let (
-         ;; By default, test the defaults
-         (org-autotask-contexts (org-autotask--def-val 'org-autotask-contexts))
-         (org-autotask-waitingfor
-          (org-autotask--def-val 'org-autotask-waitingfor))
-         (org-autotask-projects (org-autotask--def-val 'org-autotask-projects))
-         (org-autotask-somedaymaybes
-          (org-autotask--def-val 'org-autotask-somedaymaybes))
-         (org-autotask-keyword-next-action
-          (org-autotask--def-val 'org-autotask-keyword-next-action))
-         (org-autotask-keyword-done
-          (org-autotask--def-val 'org-autotask-keyword-done))
-         (org-autotask-keyword-cancelled
-          (org-autotask--def-val 'org-autotask-keyword-cancelled))
-         (org-autotask-clock-gated-commands
-          (org-autotask--def-val 'org-autotask-clock-gated-commands))
-         (org-autotask-clock-in-actions
-          (org-autotask--def-val 'org-autotask-clock-in-actions))
-         (org-use-tag-inheritance nil)
-         (org-todo-log-states nil)
-         (org-todo-repeat-to-state nil)
-         (org-enforce-todo-dependencies nil)
-         (org-stuck-projects nil)
-         (org-gcal-cancelled-todo-keyword nil)
-         ;; FIXME(laurynas): `org-tag-alist'
-         (org-todo-keywords
-          '((sequence "TODO(t!)" "|" "DONE(d!)" "CANCELLED(c!)")))
-         (org-clock-in-hook nil)
-         (current-clock-marker (when (org-clocking-p)
-                                 (copy-marker org-clock-marker)))
-         ,@varlist)
+  `(let* (
+          ;; By default, test the defaults
+          (org-autotask-contexts (org-autotask--def-val 'org-autotask-contexts))
+          (org-autotask-waitingfor
+           (org-autotask--def-val 'org-autotask-waitingfor))
+          (org-autotask-projects (org-autotask--def-val 'org-autotask-projects))
+          (org-autotask-somedaymaybes
+           (org-autotask--def-val 'org-autotask-somedaymaybes))
+          (org-autotask-keyword-next-action
+           (org-autotask--def-val 'org-autotask-keyword-next-action))
+          (org-autotask-keyword-done
+           (org-autotask--def-val 'org-autotask-keyword-done))
+          (org-autotask-keyword-cancelled
+           (org-autotask--def-val 'org-autotask-keyword-cancelled))
+          (org-autotask-clock-gated-commands
+           (org-autotask--def-val 'org-autotask-clock-gated-commands))
+          (org-autotask-clock-in-actions
+           (org-autotask--def-val 'org-autotask-clock-in-actions))
+          (org-use-tag-inheritance nil)
+          (org-todo-log-states nil)
+          (org-todo-repeat-to-state nil)
+          (org-enforce-todo-dependencies nil)
+          (org-stuck-projects nil)
+          (org-gcal-cancelled-todo-keyword nil)
+          ;; FIXME(laurynas): `org-tag-alist'
+          (org-todo-keywords
+           '((sequence "TODO(t!)" "|" "DONE(d!)" "CANCELLED(c!)")))
+          (org-clock-in-hook nil)
+          (current-clock-marker (when (org-clocking-p)
+                                  (copy-marker org-clock-marker)))
+          ,@varlist)
      (unwind-protect
          (progn
            ,@body)
