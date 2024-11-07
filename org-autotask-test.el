@@ -452,9 +452,9 @@ are compared with ACTIONS."
           (:property "SHELL" :action org-autotask--record-action)
           (:property "VISIT" :action org-autotask--record-action)
           (:property "EVAL" :action org-autotask--record-action))))
-      '("http://example.com" "TestApp" "echo test"
+      '("https://example.com" "TestApp" "echo test"
         "/tmp/test.txt" "(message \"test\")")
-    (org-set-property "URL" "http://example.com")
+    (org-set-property "URL" "https://example.com")
     (org-set-property "APP" "TestApp")
     (org-set-property "SHELL" "echo test")
     (org-set-property "VISIT" "/tmp/test.txt")
@@ -465,10 +465,10 @@ are compared with ACTIONS."
   (org-autotask--clock-in-action-test
       ((org-autotask-clock-in-actions
         `((:property "URL" :action org-autotask--record-action :multi t))))
-      '("http://1.example.com" "http://2.example.com")
-    (org-set-property "URL" "http://1.example.com")
+      '("https://1.example.com" "https://2.example.com")
+    (org-set-property "URL" "https://1.example.com")
     (org-entry-add-to-multivalued-property (point) "URL"
-                                           "http://2.example.com")))
+                                           "https://2.example.com")))
 
 (defmacro org-autotask--with-replaced-action-fn (property value action-fn
                                                           &rest body)
@@ -496,7 +496,7 @@ ACTION-FN was called with EXPECTED arg."
 (ert-deftest org-autotask-clock-in-actions-default-url ()
   "Test `org-autotask-clock-in-actions' default URL action handler."
   (org-autotask--clock-in-default-action-test
-   "URL" "http://example.com" 'browse-url '("http://example.com")))
+   "URL" "https://example.com" 'browse-url '("https://example.com")))
 
 (ert-deftest org-autotask-clock-in-actions-default-app ()
   "Test `org-autotask-clock-in-actions' default APP action handler."
