@@ -611,106 +611,99 @@ ACTION-FN was called with EXPECTED arg."
 
 ;; Test URL property custom automation helpers
 
+(defmacro org-autotask--with-temp-org-agenda-files (&rest body)
+  "Bind `org-agenda-files' temporarily and execute BODY forms.
+Bind `browse-url' temporarily to be a no-op to avoid opening a browser from
+tests."
+  (declare (debug t) (indent defun))
+  `(org-autotask--buffer-test
+       ((temp-file (make-temp-file "org-tst" nil ".org"))
+        (temp-file-2 (make-temp-file "org-tst" nil ".org"))
+        (org-agenda-files (list temp-file temp-file-2)))
+     (unwind-protect
+         (cl-letf (((symbol-function 'browse-url) (lambda (_x))))
+           ,@body)
+       (delete-file temp-file)
+       (delete-file temp-file-2))))
+
 (ert-deftest org-autotask-with-url-basic ()
   "Basic test for `org-autotask-with-org-node-with-url'."
-  (let ((temp-file (make-temp-file "org-tst" nil ".org")))
-    (org-autotask--buffer-test
-        ((org-agenda-files (list temp-file)))
-      (unwind-protect
-          (progn
-            (with-temp-file temp-file
-              (org-mode)
-              (org-insert-todo-heading-respect-content)
-              (insert "Item 0")
-              (org-insert-todo-heading-respect-content)
-              (insert "Item 1")
-              (org-set-property "URL" "https://1.example.com")
-              (org-insert-todo-heading-respect-content)
-              (insert "Item 2")
-              (org-set-property "URL" "https://2.example.com"))
-            (let (executed)
-              (org-autotask-with-org-node-with-url "https://1.example.com"
-                (setq executed t)
-                (should (string= (org-entry-get nil "URL")
-                                 "https://1.example.com"))
-                (should (string= (org-get-heading t t) "Item 1")))
-              (should executed)))
-        (delete-file temp-file)))))
+  (org-autotask--with-temp-org-agenda-files
+    (with-temp-file temp-file
+      (org-mode)
+      (org-insert-todo-heading-respect-content)
+      (insert "Item 0")
+      (org-insert-todo-heading-respect-content)
+      (insert "Item 1")
+      (org-set-property "URL" "https://1.example.com")
+      (org-insert-todo-heading-respect-content)
+      (insert "Item 2")
+      (org-set-property "URL" "https://2.example.com"))
+    (let (executed)
+      (org-autotask-with-org-node-with-url "https://1.example.com"
+        (setq executed t)
+        (should (string= (org-entry-get nil "URL")
+                         "https://1.example.com"))
+        (should (string= (org-get-heading t t) "Item 1")))
+      (should executed))))
 
 (ert-deftest org-autotask-with-url-not-found ()
   "Test for `org-autotask-with-org-node-with-url' when URL is not found."
-  (let ((temp-file (make-temp-file "org-tst" nil ".org")))
-    (org-autotask--buffer-test
-        ((org-agenda-files (list temp-file)))
-      (unwind-protect
-          (progn
-            (with-temp-file temp-file
-              (org-mode)
-              (org-insert-todo-heading-respect-content)
-              (insert "Item 0")
-              (org-insert-todo-heading-respect-content)
-              (insert "Item 1")
-              (org-set-property "URL" "https://1.example.com")
-              (org-insert-todo-heading-respect-content)
-              (insert "Item 2")
-              (org-set-property "URL" "https://2.example.com"))
-            (should-error (org-autotask-with-org-node-with-url
-                              "https://3.example.com")))
-        (delete-file temp-file)))))
+  (org-autotask--with-temp-org-agenda-files
+    (with-temp-file temp-file
+      (org-mode)
+      (org-insert-todo-heading-respect-content)
+      (insert "Item 0")
+      (org-insert-todo-heading-respect-content)
+      (insert "Item 1")
+      (org-set-property "URL" "https://1.example.com")
+      (org-insert-todo-heading-respect-content)
+      (insert "Item 2")
+      (org-set-property "URL" "https://2.example.com"))
+    (should-error (org-autotask-with-org-node-with-url
+                      "https://3.example.com"))))
 
 (ert-deftest org-autotask-with-url-multiple-files ()
   "Test `org-autotask-with-org-node-with-url' across multiple files."
-  (let ((temp-file-1 (make-temp-file "org-tst" nil ".org"))
-        (temp-file-2 (make-temp-file "org-tst" nil ".org")))
-    (org-autotask--buffer-test
-        ((org-agenda-files (list temp-file-1 temp-file-2)))
-      (unwind-protect
-          (progn
-            (with-temp-file temp-file-1
-              (org-mode)
-              (org-insert-todo-heading-respect-content)
-              (insert "Item 1")
-              (org-set-property "URL" "https://1.example.com"))
-            (with-temp-file temp-file-2
-              (org-mode)
-              (org-insert-todo-heading-respect-content)
-              (insert "Item 2")
-              (org-set-property "URL" "https://2.example.com"))
-            (let (executed)
-              (org-autotask-with-org-node-with-url "https://2.example.com"
-                (setq executed t)
-                (should (string= (buffer-file-name) temp-file-2))
-                (should (string= (org-entry-get nil "URL")
-                                 "https://2.example.com"))
-                (should (string= (org-get-heading t t) "Item 2")))
-              (should executed)))
-        (delete-file temp-file-1)
-        (delete-file temp-file-2)))))
+  (org-autotask--with-temp-org-agenda-files
+    (with-temp-file temp-file
+      (org-mode)
+      (org-insert-todo-heading-respect-content)
+      (insert "Item 1")
+      (org-set-property "URL" "https://1.example.com"))
+    (with-temp-file temp-file-2
+      (org-mode)
+      (org-insert-todo-heading-respect-content)
+      (insert "Item 2")
+      (org-set-property "URL" "https://2.example.com"))
+    (let (executed)
+      (org-autotask-with-org-node-with-url "https://2.example.com"
+        (setq executed t)
+        (should (string= (buffer-file-name) temp-file-2))
+        (should (string= (org-entry-get nil "URL")
+                         "https://2.example.com"))
+        (should (string= (org-get-heading t t) "Item 2")))
+      (should executed))))
 
 (ert-deftest org-autotask-clock-in-node-with-url-basic ()
   "Basic test for `org-autotask-clock-in-node-with-url'."
-  (let ((temp-file (make-temp-file "org-tst" nil ".org")))
-    (org-autotask--buffer-test
-        ((org-agenda-files (list temp-file)))
-      (unwind-protect
-          (progn
-            (with-temp-file temp-file
-              (org-mode)
-              (org-insert-todo-heading-respect-content)
-              (insert "Item 0")
-              (org-insert-todo-heading-respect-content)
-              (insert "Item 1")
-              (org-set-property "URL" "https://1.example.com")
-              (org-insert-todo-heading-respect-content)
-              (insert "Item 2")
-              (org-set-property "URL" "https://2.example.com"))
-            (org-autotask-clock-in-node-with-url "https://1.example.com")
-            (org-clock-goto)
-            (should (org-clocking-p))
-            (should (string= (org-entry-get nil "URL")
-                             "https://1.example.com"))
-            (should (string= (org-get-heading t t) "Item 1")))
-        (delete-file temp-file)))))
+  (org-autotask--with-temp-org-agenda-files
+    (with-temp-file temp-file
+      (org-mode)
+      (org-insert-todo-heading-respect-content)
+      (insert "Item 0")
+      (org-insert-todo-heading-respect-content)
+      (insert "Item 1")
+      (org-set-property "URL" "https://1.example.com")
+      (org-insert-todo-heading-respect-content)
+      (insert "Item 2")
+      (org-set-property "URL" "https://2.example.com"))
+    (org-autotask-clock-in-node-with-url "https://1.example.com")
+    (org-clock-goto)
+    (should (org-clocking-p))
+    (should (string= (org-entry-get nil "URL")
+                     "https://1.example.com"))
+    (should (string= (org-get-heading t t) "Item 1"))))
 
 (ert-deftest org-autotask-with-different-org-clock-no-current-clock ()
   "Test `org-autotask-with-different-org-clock' with no current clock."
