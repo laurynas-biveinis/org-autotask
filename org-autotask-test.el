@@ -736,6 +736,7 @@ tests."
     (org-insert-todo-heading-respect-content)
     (insert "Item 0")
     (org-back-to-heading)
+    (forward-char)
     (setq item0-mark (point-marker))
     (org-insert-todo-heading-respect-content)
     (insert "Item 1")
@@ -758,6 +759,7 @@ tests."
     (should (= (save-excursion
                  (goto-char (marker-position org-clock-marker))
                  (org-back-to-heading)
+                 (forward-char)
                  (point)) (marker-position item0-mark)))
     (org-clock-out)))
 
