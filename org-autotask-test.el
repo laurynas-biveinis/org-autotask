@@ -730,35 +730,35 @@ tests."
 
 (ert-deftest org-autotask-with-different-org-clock-with-existing-clock ()
   "Test `org-autotask-with-different-org-clock' with an existing clock."
-  (org-autotask--buffer-test ()
+  (org-autotask--buffer-test
+      (executed item0-mark item1-mark)
     (org-insert-todo-heading-respect-content)
     (insert "Item 0")
+    (org-back-to-heading)
+    (setq item0-mark (point-marker))
     (org-insert-todo-heading-respect-content)
     (insert "Item 1")
-    (let ((item0-pos (point-min))
-          ;; TODO(laurynas): rewrite to use markers instead
-          item1-pos executed)
-      (goto-char item0-pos)
-      (org-clock-in)
-      (outline-next-heading)
-      (org-autotask-with-different-org-clock
-        (setq item1-pos (save-excursion
-                          (goto-char item0-pos)
-                          (outline-next-heading)
-                          (point)))
-        (setq executed t)
-        (should (org-clocking-p))
-        (should (= (save-excursion
-                     (goto-char (marker-position org-clock-marker))
-                     (org-back-to-heading)
-                     (point)) item1-pos)))
-      (should executed)
+    (org-back-to-heading)
+    (forward-char)
+    (setq item1-mark (point-marker))
+    (goto-char (marker-position item0-mark))
+    (org-clock-in)
+    (outline-next-heading)
+    (org-autotask-with-different-org-clock
+      (setq executed t)
       (should (org-clocking-p))
       (should (= (save-excursion
                    (goto-char (marker-position org-clock-marker))
                    (org-back-to-heading)
-                   (point)) item0-pos))
-      (org-clock-out))))
+                   (forward-char)
+                   (point)) (marker-position item1-mark))))
+    (should executed)
+    (should (org-clocking-p))
+    (should (= (save-excursion
+                 (goto-char (marker-position org-clock-marker))
+                 (org-back-to-heading)
+                 (point)) (marker-position item0-mark)))
+    (org-clock-out)))
 
 (ert-deftest org-autotask-with-different-org-clock-error-exit ()
   "Test `org-autotask-with-different-org-clock' cleaning up on error exit."
