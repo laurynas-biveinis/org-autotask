@@ -707,26 +707,27 @@ tests."
 
 (ert-deftest org-autotask-with-different-org-clock-no-current-clock ()
   "Test `org-autotask-with-different-org-clock' with no current clock."
-  (org-autotask--buffer-test ()
+  (org-autotask--buffer-test
+      (executed item1-mark)
     (org-insert-todo-heading-respect-content)
     (insert "Item 0")
     (org-insert-todo-heading-respect-content)
     (insert "Item 1")
-    (let ((item1-pos (save-excursion
-                       (org-back-to-heading)
-                       (point)))
-          executed)
-      (when (org-clocking-p)
-        (org-clock-out))
-      (org-autotask-with-different-org-clock
-        (setq executed t)
-        (should (org-clocking-p))
-        (should (= (save-excursion
-                     (goto-char (marker-position org-clock-marker))
-                     (org-back-to-heading)
-                     (point)) item1-pos)))
-      (should executed)
-      (should-not (org-clocking-p)))))
+    (org-back-to-heading)
+    (forward-char)
+    (setq item1-mark (point-marker))
+    (when (org-clocking-p)
+      (org-clock-out))
+    (org-autotask-with-different-org-clock
+      (setq executed t)
+      (should (org-clocking-p))
+      (should (= (save-excursion
+                   (goto-char (marker-position org-clock-marker))
+                   (org-back-to-heading)
+                   (forward-char)
+                   (point)) (marker-position item1-mark))))
+    (should executed)
+    (should-not (org-clocking-p))))
 
 (ert-deftest org-autotask-with-different-org-clock-with-existing-clock ()
   "Test `org-autotask-with-different-org-clock' with an existing clock."
