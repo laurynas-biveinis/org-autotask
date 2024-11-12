@@ -713,15 +713,16 @@ tests."
   (forward-char)
   (point-marker))
 
-(defun org-autotask--clocked-heading-pos ()
-  "Return current `org' clock position.
-The position is suitable for comparison with the position of
-`org-autotask--insert-heading-marker'."
-  (save-excursion
-    (goto-char (marker-position org-clock-marker))
-    (org-back-to-heading)
-    (forward-char)
-    (point)))
+(defun org-autotask--should-clocked-heading-pos (marker)
+  "Test that current `org' clock position is at MARKER.
+The marker can be returned by `org-autotask--insert-heading-marker'."
+  (should (org-clocking-p))
+  (should (= (save-excursion
+               (goto-char (marker-position org-clock-marker))
+               (org-back-to-heading)
+               (forward-char)
+               (point))
+             (marker-position marker))))
 
 (ert-deftest org-autotask-with-different-org-clock-no-current-clock ()
   "Test `org-autotask-with-different-org-clock' with no current clock."
@@ -734,9 +735,7 @@ The position is suitable for comparison with the position of
       (org-clock-out))
     (org-autotask-with-different-org-clock
       (setq executed t)
-      (should (org-clocking-p))
-      (should (= (org-autotask--clocked-heading-pos)
-                 (marker-position item1-mark))))
+      (org-autotask--should-clocked-heading-pos item1-mark))
     (should executed)
     (should-not (org-clocking-p))))
 
@@ -751,13 +750,9 @@ The position is suitable for comparison with the position of
     (outline-next-heading)
     (org-autotask-with-different-org-clock
       (setq executed t)
-      (should (org-clocking-p))
-      (should (= (org-autotask--clocked-heading-pos)
-                 (marker-position item1-mark))))
+      (org-autotask--should-clocked-heading-pos item1-mark))
     (should executed)
-    (should (org-clocking-p))
-    (should (= (org-autotask--clocked-heading-pos)
-               (marker-position item0-mark)))
+    (org-autotask--should-clocked-heading-pos item0-mark)
     (org-clock-out)))
 
 (ert-deftest org-autotask-with-different-org-clock-error-exit ()
