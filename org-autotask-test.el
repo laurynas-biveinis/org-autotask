@@ -713,6 +713,16 @@ tests."
   (forward-char)
   (point-marker))
 
+(defun org-autotask--clocked-heading-pos ()
+  "Return current `org' clock position.
+The position is suitable for comparison with the position of
+`org-autotask--insert-heading-marker'."
+  (save-excursion
+    (goto-char (marker-position org-clock-marker))
+    (org-back-to-heading)
+    (forward-char)
+    (point)))
+
 (ert-deftest org-autotask-with-different-org-clock-no-current-clock ()
   "Test `org-autotask-with-different-org-clock' with no current clock."
   (org-autotask--buffer-test
@@ -725,11 +735,8 @@ tests."
     (org-autotask-with-different-org-clock
       (setq executed t)
       (should (org-clocking-p))
-      (should (= (save-excursion
-                   (goto-char (marker-position org-clock-marker))
-                   (org-back-to-heading)
-                   (forward-char)
-                   (point)) (marker-position item1-mark))))
+      (should (= (org-autotask--clocked-heading-pos)
+                 (marker-position item1-mark))))
     (should executed)
     (should-not (org-clocking-p))))
 
@@ -745,18 +752,12 @@ tests."
     (org-autotask-with-different-org-clock
       (setq executed t)
       (should (org-clocking-p))
-      (should (= (save-excursion
-                   (goto-char (marker-position org-clock-marker))
-                   (org-back-to-heading)
-                   (forward-char)
-                   (point)) (marker-position item1-mark))))
+      (should (= (org-autotask--clocked-heading-pos)
+                 (marker-position item1-mark))))
     (should executed)
     (should (org-clocking-p))
-    (should (= (save-excursion
-                 (goto-char (marker-position org-clock-marker))
-                 (org-back-to-heading)
-                 (forward-char)
-                 (point)) (marker-position item0-mark)))
+    (should (= (org-autotask--clocked-heading-pos)
+               (marker-position item0-mark)))
     (org-clock-out)))
 
 (ert-deftest org-autotask-with-different-org-clock-error-exit ()
