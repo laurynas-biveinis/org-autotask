@@ -705,17 +705,21 @@ tests."
                      "https://1.example.com"))
     (should (string= (org-get-heading t t) "Item 1"))))
 
+(defun org-autotask--insert-heading-marker (title)
+  "Create a new `org' heading with TITLE and return a marker inside it."
+  (org-insert-todo-heading-respect-content)
+  (insert title)
+  (org-back-to-heading)
+  (forward-char)
+  (point-marker))
+
 (ert-deftest org-autotask-with-different-org-clock-no-current-clock ()
   "Test `org-autotask-with-different-org-clock' with no current clock."
   (org-autotask--buffer-test
       (executed item1-mark)
     (org-insert-todo-heading-respect-content)
     (insert "Item 0")
-    (org-insert-todo-heading-respect-content)
-    (insert "Item 1")
-    (org-back-to-heading)
-    (forward-char)
-    (setq item1-mark (point-marker))
+    (setq item1-mark (org-autotask--insert-heading-marker "Item 1"))
     (when (org-clocking-p)
       (org-clock-out))
     (org-autotask-with-different-org-clock
@@ -733,16 +737,8 @@ tests."
   "Test `org-autotask-with-different-org-clock' with an existing clock."
   (org-autotask--buffer-test
       (executed item0-mark item1-mark)
-    (org-insert-todo-heading-respect-content)
-    (insert "Item 0")
-    (org-back-to-heading)
-    (forward-char)
-    (setq item0-mark (point-marker))
-    (org-insert-todo-heading-respect-content)
-    (insert "Item 1")
-    (org-back-to-heading)
-    (forward-char)
-    (setq item1-mark (point-marker))
+    (setq item0-mark (org-autotask--insert-heading-marker "Item 0"))
+    (setq item1-mark (org-autotask--insert-heading-marker "Item 1"))
     (goto-char (marker-position item0-mark))
     (org-clock-in)
     (outline-next-heading)
