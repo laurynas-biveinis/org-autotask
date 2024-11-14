@@ -757,24 +757,18 @@ The marker can be returned by `org-autotask--insert-heading-marker'."
 
 (ert-deftest org-autotask-with-different-org-clock-error-exit ()
   "Test `org-autotask-with-different-org-clock' cleaning up on error exit."
-  (org-autotask--buffer-test ()
-    (org-insert-todo-heading-respect-content)
-    (insert "Item 0")
+  (org-autotask--buffer-test (item0-mark)
+    (setq item0-mark (org-autotask--insert-heading-marker "Item 0"))
     (org-insert-todo-heading-respect-content)
     (insert "Item 1")
-    (let ((item0-pos (point-min)))
-      (goto-char item0-pos)
-      (org-clock-in)
-      (outline-next-heading)
-      (should-not (= item0-pos (point)))
-      (should-error
-       (org-autotask-with-different-org-clock
-         (user-error "Test error")))
-      (should (org-clocking-p))
-      (should (= (save-excursion
-                   (goto-char (marker-position org-clock-marker))
-                   (org-back-to-heading)
-                   (point)) item0-pos)))
+    (goto-char (marker-position item0-mark))
+    (org-clock-in)
+    (outline-next-heading)
+    (should-not (= (marker-position item0-mark) (point)))
+    (should-error
+     (org-autotask-with-different-org-clock
+       (user-error "Test error")))
+    (org-autotask--should-clocked-heading-pos item0-mark)
     (org-clock-out)))
 
 ;; TODO(laurynas): idempotency
