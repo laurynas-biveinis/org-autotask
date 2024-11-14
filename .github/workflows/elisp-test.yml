@@ -41,16 +41,17 @@ jobs:
               --eval "(add-to-list 'package-archives '(\"melpa\" . \"https://melpa.org/packages/\") t)" \
               --eval "(package-initialize)" \
               --eval "(package-refresh-contents)" \
+              --eval "(package-install 'elisp-lint)" \
               --eval "(package-install 'package-lint)"
 
-    - name: Byte-compile
+    - name: elisp-lint
       run: |
         emacs -Q --batch \
-          --eval "(setq byte-compile-error-on-warn t)" \
-          --eval "(add-to-list 'load-path (expand-file-name \".\"))" \
-          -f batch-byte-compile org-autotask.el org-autotask-test.el
+              --eval "(package-initialize)" \
+              --eval "(require 'elisp-lint)" \
+              -f elisp-lint-files-batch *.el
 
-    - name: Lint
+    - name: package-lint
       run: |
         emacs -Q --batch \
               --eval "(package-initialize)" \
