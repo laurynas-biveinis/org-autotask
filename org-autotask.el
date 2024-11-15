@@ -194,7 +194,7 @@ property."
       (org-autotask--org-headline-has-url headline url)) nil t))
 
 (defun org-autotask--find-org-node-with-url-property (url)
-  "Find the Org node with a given URL property value across `org-agenda-files'."
+  "Find the Org node with a given URL property value in Org agenda files."
   (let ((files (org-agenda-files))
         (found nil))
     (while (and files (not found))
