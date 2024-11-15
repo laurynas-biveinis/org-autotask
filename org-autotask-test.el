@@ -348,7 +348,7 @@
        ,@body)))
 
 (defun org-autotask--check-heading-at-point (title todo-state context)
-  "Check `org' title at point having TITLE, TODO-STATE, & is tagged for CONTEXT."
+  "Check `org' title at point having TITLE, TODO-STATE, & tagged for CONTEXT."
   (should (string= (org-get-heading t t) title))
   (should (string= (org-get-todo-state) todo-state))
   (should (equal (org-get-tags) (list (org-autotask-list-tag context)))))
