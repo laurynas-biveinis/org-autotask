@@ -26,8 +26,9 @@
   "A single GTD list, which could be for a context, projects, and someday/maybe
 items."
   (tag "" :type string :read-only t :documentation "The `org' tag.")
-  (select-char ? :type character :read-only t
-               :documentation "The `org' quick selection character for the tag.")
+  (select-char
+   ? :type character :read-only t
+   :documentation "The `org' quick selection character for the tag.")
   (description "" :type string :read-only t
                :documentation "The description string for this list."))
 
@@ -67,7 +68,8 @@ The tags and the selection keys will be added to as a single group to
   :package-version '(org-autotask . "0.1"))
 
 (defcustom org-autotask-projects
-  (make-org-autotask-list :tag "project" :select-char ?p :description "Projects")
+  (make-org-autotask-list :tag "project" :select-char ?p
+                          :description "Projects")
   "The GTD project list."
   :type '(struct :tag "Project list."
                  (string :tag "`org Tag")
@@ -299,14 +301,14 @@ inconsistencies."
       nil)
      ((stringp org-use-tag-inheritance)
       (unless (string-match-p org-use-tag-inheritance somedaymaybe-tag)
-        (user-error
-         "`org-autotask-somedaymaybes' tag %s does not match `org-use-tag-inheritance' regex %s"
-         somedaymaybe-tag org-use-tag-inheritance)))
+        (user-error "`%s' tag %s does not match `%s' regex %s"
+                    "org-autotask-somedaymaybes" "org-use-tag-inheritance"
+                    somedaymaybe-tag org-use-tag-inheritance)))
      ((listp org-use-tag-inheritance)
       (when (member somedaymaybe-tag org-use-tag-inheritance)
-        (user-error
-         "`org-autotask-somedaymaybes' tag %s already in `org-use-tag-inheritance' %S"
-         somedaymaybe-tag org-use-tag-inheritance))
+        (user-error "`%s' tag %s already in `%s' %S"
+                    "org-autotask-somedaymaybes" "org-use-tag-inheritance"
+                    somedaymaybe-tag org-use-tag-inheritance))
       (push somedaymaybe-tag org-use-tag-inheritance))
      (t (user-error "Don't know how handle `org-use-tag-inheritance' value %S"
                     org-use-tag-inheritance))))
