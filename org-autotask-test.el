@@ -41,7 +41,7 @@
   (eval (car (get sym 'standard-value))))
 
 (defmacro org-autotask--test-fixture (varlist &rest body)
-  "A test fixture for `org-autotask' to bind VARLIST vars and execute BODY forms."
+  "Test fixture for `org-autotask' to bind VARLIST vars and execute BODY forms."
   (declare (indent 1) (debug t))
   `(let* (
           ;; By default, test the defaults
