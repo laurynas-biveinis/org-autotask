@@ -538,7 +538,7 @@ ACTION-FN was called with EXPECTED arg."
     (org-clock-out)))
 
 (ert-deftest org-autotask-require-clock-off ()
-  "Test that `org-autotask-require-clock-on' errors out without an active clock."
+  "Test `org-autotask-require-clock-on' erroring without an active clock."
   (org-autotask--buffer-test ()
     (org-insert-todo-heading-respect-content)
     (when (org-clocking-p)
@@ -568,10 +568,10 @@ ACTION-FN was called with EXPECTED arg."
   (advice-remove 'org-autotask-test--3 #'org-autotask--require-org-clock))
 
 (ert-deftest org-autotask-clock-gated-commands-blocked ()
-  "Test `org-autotask-clock-gated-commands' blocking commands when not clocking."
+  "Test `org-autotask-clock-gated-commands' blocking when not clocking."
   (org-autotask--test-fixture
       ((org-autotask-clock-gated-commands '(org-autotask-test--1
-                                          org-autotask-test--3))
+                                            org-autotask-test--3))
        (org-autotask-test--1-called nil)
        (org-autotask-test--2-called nil)
        (org-autotask-test--3-called nil))
@@ -612,7 +612,7 @@ ACTION-FN was called with EXPECTED arg."
 ;; Test URL property custom automation helpers
 
 (defmacro org-autotask--with-temp-org-agenda-files (&rest body)
-  "Bind `org-agenda-files' temporarily and execute BODY forms.
+  "Bind variable `org-agenda-files' temporarily and execute BODY forms.
 Bind `browse-url' temporarily to be a no-op to avoid opening a browser from
 tests."
   (declare (debug t) (indent defun))
