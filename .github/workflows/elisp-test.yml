@@ -49,7 +49,7 @@ jobs:
         emacs -Q --batch \
               --eval "(package-initialize)" \
               --eval "(require 'elisp-lint)" \
-              -f elisp-lint-files-batch *.el
+              -f elisp-lint-files-batch ./*.el
 
     - name: package-lint
       run: |
