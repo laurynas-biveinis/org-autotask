@@ -272,7 +272,7 @@ Checks and modifies `org' configuration:
 - `org-todo-keywords' must contain all of the `org-autotask'-configured
   keywords.
 - `org-use-tag-inheritance' must either be t, a string that matches the
-  someday/maybe tag, or be a list. If it's a list, the tag for someday/maybe
+  someday/maybe tag, or be a list.  If it's a list, the tag for someday/maybe
   will be added there.
 - `org-tag-alist' must not have anything related to contexts, projects, and
   someday/maybe, and they will be added to it.
@@ -351,8 +351,8 @@ inconsistencies."
 
 (defun org-autotask-agenda-block (gtd-lists &optional header)
   "Return a `tags-todo' block for GTD-LISTS with optional HEADER.
-GTD-LISTS can be a single GTD list or their sequence. If HEADER is not provided,
-take it from the description of the only list."
+GTD-LISTS can be a single GTD list or their sequence.  If HEADER is not
+provided, take it from the description of the only list."
   (let* ((single-gtd-list-p (and (not (sequencep gtd-lists))
                                  (org-autotask-list-p gtd-lists)))
          (gtd-lists-list (if single-gtd-list-p (list gtd-lists) gtd-lists))

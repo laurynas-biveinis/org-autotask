@@ -777,4 +777,7 @@ The marker can be returned by `org-autotask--insert-heading-marker'."
 ;; TODO(laurynas): uniqueness between contexts and waitingfor
 
 (provide 'org-autotask-test)
+;; Local variables:
+;; elisp-lint-ignored-validators : ("package-lint")
+;; End:
 ;;; org-autotask-test.el ends here
