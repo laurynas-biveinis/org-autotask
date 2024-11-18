@@ -22,6 +22,7 @@
 (defvar org-gcal-cancelled-todo-keyword)
 
 ;; The GTD list structure, used for contexts, projects, and someday/maybe items.
+;;;###autoload
 (cl-defstruct (org-autotask-list)
   "A single GTD list, which could be for a context, projects, and someday/maybe
 items."
@@ -32,18 +33,21 @@ items."
   (description "" :type string :read-only t
                :documentation "The description string for this list."))
 
+;;;###autoload
 (defun org-autotask-list-not-tag (gtd-list)
   "Get the substring for `org-agenda' blocks to exclude GTD-LIST."
   (concat "-" (org-autotask-list-tag gtd-list)))
 
 ;;; Customization
 
+;;;###autoload
 (defgroup org-autotask nil
   "Configure `org-autotask'."
   :group 'org)
 
 ;; Lists
 
+;;;###autoload
 (defcustom org-autotask-contexts nil
   "GTD contexts with `org' tags, quick selection characters, and descriptions.
 The tags and the selection keys will be added to as a single group to
@@ -56,6 +60,7 @@ The tags and the selection keys will be added to as a single group to
   :group 'org-autotask
   :package-version '(org-autotask . "0.1"))
 
+;;;###autoload
 (defcustom org-autotask-waitingfor
   (make-org-autotask-list :tag "@waitingfor" :select-char ?w
                           :description "Waiting-for items")
@@ -67,6 +72,7 @@ The tags and the selection keys will be added to as a single group to
   :group 'org-autotask
   :package-version '(org-autotask . "0.1"))
 
+;;;###autoload
 (defcustom org-autotask-projects
   (make-org-autotask-list :tag "project" :select-char ?p
                           :description "Projects")
@@ -78,6 +84,7 @@ The tags and the selection keys will be added to as a single group to
   :group 'org-autotask
   :package-version '(org-autotask . "0.1"))
 
+;;;###autoload
 (defcustom org-autotask-somedaymaybes
   (make-org-autotask-list :tag "somedaymaybe" :select-char ?m
                           :description "Someday/maybe")
@@ -91,6 +98,7 @@ The tags and the selection keys will be added to as a single group to
 
 ;; Entry keywords
 
+;;;###autoload
 (defcustom org-autotask-keyword-next-action "TODO"
   "The TODO entry keyword that designates a next action.
 Projects also have this keyword (in addition to `org-autotask-projects' tag.) It
@@ -100,6 +108,7 @@ configuration, with an optional fast state selection character."
   :group 'org-autotask
   :package-version '(org-autotask . "0.1"))
 
+;;;###autoload
 (defcustom org-autotask-keyword-done "DONE"
   "The TODO entry keyword that designates a completed task or project.
 It must be present in `org-todo-keyword', either directly or thorugh per-file
@@ -108,6 +117,7 @@ configuration, with an optional fast state selection character."
   :group 'org-autotask
   :package-version '(org-autotask . "0.1"))
 
+;;;###autoload
 (defcustom org-autotask-keyword-cancelled "CANCELLED"
   "The TODO entry keyword that designates a cancelled task or project.
 It must be present in `org-todo-keywords', either directly or through per-file
@@ -118,12 +128,14 @@ configuration, with an optional fast state selection character."
 
 ;; Clocking automation
 
+;;;###autoload
 (defcustom org-autotask-clock-gated-commands '()
   "List of commands that should be gated by `org-autotask-require-org-clock'."
   :type '(repeat symbol)
   :group 'org-autotask
   :package-version '(org-autotask . "0.1"))
 
+;;;###autoload
 (defcustom org-autotask-clock-in-actions
   '((:property "URL" :action browse-url :multi t)
     (:property "APP" :action org-autotask-clock-in-open-macos-app)
@@ -146,17 +158,20 @@ property."
 
 ;; Clocking automation actions
 
+;;;###autoload
 (defun org-autotask-clock-in-open-macos-app (app)
   "Open APP on macOS."
   (unless (eq system-type 'darwin)
     (user-error "Only supported under macOS"))
   (shell-command (concat "open -a " app)))
 
+;;;###autoload
 (defun org-autotask-clock-in-visit-file (file)
   "Visit FILE and move to the end."
   (find-file file)
   (goto-char (point-max)))
 
+;;;###autoload
 (defun org-autotask-clock-in-eval (code)
   "Evaluate Elisp CODE."
   (eval (read code)))
@@ -174,6 +189,7 @@ property."
         (when value
           (funcall func value))))))
 
+;;;###autoload
 (defun org-autotask-require-org-clock ()
   "Return user error if no `org' task is currently clocked in."
   (unless (org-clocking-p)
@@ -208,6 +224,7 @@ property."
           (setq found (list :buffer buffer :headline node)))))
     found))
 
+;;;###autoload
 (defmacro org-autotask-with-org-node-with-url (url &rest body)
   "Go to the `org' node with the URL property value, execute the forms of BODY."
   (declare (indent 1) (debug t))
@@ -221,6 +238,7 @@ property."
          (goto-char headline-pos)
          ,@body))))
 
+;;;###autoload
 (defun org-autotask-clock-in-node-with-url (url)
   "Go to the `org' node with the given URL property value and clock it in."
   (org-mark-ring-push)
@@ -229,6 +247,7 @@ property."
     (org-clock-in)
     (message "Clocking-in the `org' node with %s, use C-c & to go back" url)))
 
+;;;###autoload
 (defmacro org-autotask-with-different-org-clock (&rest body)
   "Save the current org clock, clock-in, execute the forms of BODY.
 The marker must be at the new clock position."
@@ -266,6 +285,7 @@ The marker must be at the new clock position."
   "Block the command if no `org' task is clocked in."
   (org-autotask-require-org-clock))
 
+;;;###autoload
 (defun org-autotask-initialize ()
   "Initialize `org-autotask'.
 Checks and modifies `org' configuration:
@@ -349,6 +369,7 @@ inconsistencies."
                        gtd-lists "|")
             "/!" org-autotask-keyword-next-action)))
 
+;;;###autoload
 (defun org-autotask-agenda-block (gtd-lists &optional header)
   "Return a `tags-todo' block for GTD-LISTS with optional HEADER.
 GTD-LISTS can be a single GTD list or their sequence.  If HEADER is not
@@ -364,12 +385,14 @@ provided, take it from the description of the only list."
       ((org-agenda-overriding-header ,header-string)
        (org-agenda-dim-blocked-tasks 'invisible)))))
 
+;;;###autoload
 (defun org-autotask-agenda (gtd-list)
   "Return an `org-agenda' command part to show active items from GTD-LIST.
 TODO(laurynas) example (also to README)."
   (list (org-autotask-list-description gtd-list) 'tags-todo
         (org-autotask--active-todo-search gtd-list)))
 
+;;;###autoload
 (defun org-autotask-agenda-somedaymaybe ()
   "Return an `org-agenda' command part to show someday/maybe items.
 TODO(laurynas) explanation for LEVEL=2."
@@ -378,6 +401,7 @@ TODO(laurynas) explanation for LEVEL=2."
         (concat (org-autotask-list-tag org-autotask-somedaymaybes) "+LEVEL=2")
         '((org-agenda-dim-blocked-tasks nil))))
 
+;;;###autoload
 (defun org-autotask-agenda-active-non-project-tasks ()
   "Return an `org-agenda' command part to show active non-project next actions."
   (list "Non-project next actions"
@@ -390,6 +414,7 @@ TODO(laurynas) explanation for LEVEL=2."
            '(,(org-autotask-list-tag org-autotask-projects)
              ,(org-autotask-list-tag org-autotask-somedaymaybes))))))
 
+;;;###autoload
 (defun org-autotask-agenda-archivable-tasks ()
   "Return an `org-agenda' command part to show archivable non-project tasks."
   (list 'tags
@@ -399,6 +424,7 @@ TODO(laurynas) explanation for LEVEL=2."
           (org-use-tag-inheritance '(,(org-autotask-list-tag
                                        org-autotask-projects))))))
 
+;;;###autoload
 (defun org-autotask-agenda-contextless-tasks ()
   "Return an `org-agenda' command part to show listless tasks."
   (list 'todo
@@ -421,18 +447,21 @@ The heading must be already created."
   (org-todo keyword)
   (org-set-tags tag))
 
+;;;###autoload
 (defun org-autotask-insert-project (title)
   "Insert a new project task with TITLE at point.
 The heading must be already created."
   (org-autotask--insert-item title org-autotask-keyword-next-action
                              (org-autotask-list-tag org-autotask-projects)))
 
+;;;###autoload
 (defun org-autotask-insert-waiting-for-next-action (title)
   "Insert a new next action waiting-for task with TITLE at point.
 The heading must be already created."
   (org-autotask--insert-item title org-autotask-keyword-next-action
                              (org-autotask-list-tag org-autotask-waitingfor)))
 
+;;;###autoload
 (defun org-autotask-complete-item ()
   "Mark the item (a task or a project) at point as done."
   (org-todo org-autotask-keyword-done))
