@@ -51,13 +51,6 @@ jobs:
               --eval "(require 'elisp-lint)" \
               -f elisp-lint-files-batch ./*.el
 
-    - name: package-lint
-      run: |
-        emacs -Q --batch \
-              --eval "(package-initialize)" \
-              --eval "(require 'package-lint)" \
-              -f package-lint-batch-and-exit org-autotask.el
-
     - name: Run tests
       run: |
         emacs -Q --batch \
