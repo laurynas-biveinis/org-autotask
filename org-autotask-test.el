@@ -92,42 +92,41 @@
 
 ;; Test `org-autotask-initialize'
 
-(ert-deftest org-tag-alist-construction-empty ()
-  "Test that `org-tag-alist' is properly constructed, when it's empty."
+(defun org-autotask--test-tag-alist-construction (initial expected)
+  "Helper to test `org-tag-alist' construction.
+INITIAL is the starting value of `org-tag-alist'.
+EXPECTED is what `org-tag-alist' should be after initialization."
   (org-autotask--test-fixture
-      ((org-tag-alist nil)
+      ((org-tag-alist initial)
        (org-autotask-contexts org-autotask--test-contexts)
        (org-autotask-waitingfor org-autotask--test-waitingfor)
        (org-autotask-projects org-autotask--test-projects)
        (org-autotask-somedaymaybes org-autotask--test-somedaymaybe))
     (org-autotask-initialize)
-    (should (equal org-tag-alist
-                   '((:startgroup)
-                     ("@c1" . ?a)
-                     ("@c2" . ?b)
-                     ("@wait" . ?w)
-                     (:endgroup)
-                     ("prj" . ?c)
-                     ("maybesomeday" . ?d))))))
+    (should (equal org-tag-alist expected))))
+
+(ert-deftest org-tag-alist-construction-empty ()
+  "Test that `org-tag-alist' is properly constructed, when it's empty."
+  (org-autotask--test-tag-alist-construction
+   nil '((:startgroup)
+         ("@c1" . ?a)
+         ("@c2" . ?b)
+         ("@wait" . ?w)
+         (:endgroup)
+         ("prj" . ?c)
+         ("maybesomeday" . ?d))))
 
 (ert-deftest org-tag-alist-construction-preexisting ()
   "Test that `org-tag-alist' is properly adjusted, when it's non-empty."
-  (org-autotask--test-fixture
-      ((org-tag-alist '(("@x" . ?x)))
-       (org-autotask-contexts org-autotask--test-contexts)
-       (org-autotask-waitingfor org-autotask--test-waitingfor)
-       (org-autotask-projects org-autotask--test-projects)
-       (org-autotask-somedaymaybes org-autotask--test-somedaymaybe))
-    (org-autotask-initialize)
-    (should (equal org-tag-alist
-                   '((:startgroup)
-                     ("@c1" . ?a)
-                     ("@c2" . ?b)
-                     ("@wait" . ?w)
-                     (:endgroup)
-                     ("prj" . ?c)
-                     ("maybesomeday" . ?d)
-                     ("@x" . ?x))))))
+  (org-autotask--test-tag-alist-construction
+   '(("@x" . ?x)) '((:startgroup)
+                    ("@c1" . ?a)
+                    ("@c2" . ?b)
+                    ("@wait" . ?w)
+                    (:endgroup)
+                    ("prj" . ?c)
+                    ("maybesomeday" . ?d)
+                    ("@x" . ?x))))
 
 (ert-deftest org-autotask-keyword-next-action-not-in-org-todo-keywords ()
   "Test that the next action keyword must be present in `org-todo-keywords'."
