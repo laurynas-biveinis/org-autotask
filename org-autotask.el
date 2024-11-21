@@ -7,7 +7,275 @@
 
 ;;; Commentary:
 
-;; This is a proto-package for my GTD implementation in `org'.
+;; This is a set of building blocks for a task management implementation in Org
+;; following GTD (Getting Things Done), with focus on agenda views for contexts
+;; and automation, for clocking and writing own ones in Elisp.  Assumes
+;; familiarity with Org.
+;;
+;; * Example
+;;
+;; ** Minimal configuration
+;;
+;; A sample minimum configuration using the defaults. Note that it might be
+;; useful to store the individual contexts in variables instead of calling
+;; `'make-org-autotask-list' directly under `vector' if you want to refer to the
+;; specific contexts while building agendas:
+;;
+;;     (defconst my-online-context
+;;       (make-org-autotask-list :tag "@online" :select-char ?i
+;;                               :description "Online tasks"))
+;;     (defconst my-home-context
+;;       (make-org-autotask-list :tag "@home" :select-char ?h
+;;                               :description "At home"))
+;;     (defconst my-office-context
+;;       (make-org-autotask-list :tag "@office" :select-char ?o
+;;                               :description "At office"))
+;;     (setq org-autotask-contexts
+;;       (vector my-online-context my-home-context my-office-context))
+;;
+;;     (setq org-tag-alist '(("tag" . ?t)))
+;;     (setq org-use-tag-inheritance '("tag"))
+;;     (setq org-todo-keywords
+;;           '(sequence "TODO(t!)" "|" "DONE(d!)" "CANCELLED(c!)"))
+;;
+;;     (org-autotask-initialize)
+;;
+;; results in
+;;
+;;     (symbol-value 'org-use-tag-inheritance)
+;;       ("somedaymaybe" "tag")
+;;     (symbol-value 'org-tag-alist)
+;;       ((:startgroup)
+;;        ("@online" . ?i) ("@home" . ?h) ("@office" . ?o) ("@waitingfor" . ?w)
+;;        (:endgroup)
+;;        ("project" . ?p) ("somedaymaybe" . ?m) ("tag" . ?t))
+;;     (symbol-value 'org-todo-repeat-to-state)
+;;       "TODO"
+;;     (symbol-value 'org-todo-enforce-todo-dependencies)
+;;       t
+;;     (symbol-value 'org-stuck-projects)
+;;       ("+project-somedaymaybe/!TODO" ("TODO") nil "")
+;;     (symbol-value 'org-gcal-cancelled-todo-keyword)
+;;       "CANCELLED"
+;;
+;; The last variable comes from `org-gcal'.
+;;
+;; ** Agendas
+;;
+;; Org agenda building block helpers can be used as follows:
+;;
+;;     (setq org-agenda-custom-commands
+;;           `(("i" ,@(org-autotask-agenda my-online-context))
+;;             ("p" ,@(org-autotask-agenda org-autotask-project-list))
+;;             ("s" ,@(org-autotask-agenda-somedaymaybe))
+;;             ("n" ,@(org-autotask-agenda-active-non-project-tasks))
+;;             ("A" "Custom agenda"
+;;              ((agenda "" nil)
+;;               ,(org-autotask-agenda-block
+;;                 (list my-home-context my-office-context)
+;;                 "At home and at office")
+;;               ,(org-autotask-agenda-block org-autotask-waitingfor-context)
+;;               ,(org-autotask-agenda-archivable-tasks)
+;;               ,(org-autotask-agenda-contextless-tasks)))))
+;;
+;; ** Blocking commands unless the Org clock is running
+;;
+;; For example, to prevent using Magit if no Org clock is running, add the
+;; following before the `org-gtd-initialize' call:
+;;
+;;     (add-to-list 'org-autotask-clock-gated-commands #'magit-status)
+;;     (add-to-list 'org-autotask-clock-gated-commands #'magit-commit)
+;;     (add-to-list 'org-autotask-clock-gated-commands #'magit-push)
+;;     (add-to-list 'org-autotask-clock-gated-commands #'magit-stage)
+;;     (add-to-list 'org-autotask-clock-gated-commands #'magit-unstage)
+;;
+;; Be careful not to add the clocking-in itself nor some low-level command that
+;; would lock you out of Emacs. To do this for your own commands, the above
+;; method still works, but it might be more convenient to call
+;; `org-autotask-require-org-clock' from the command itself instead.
+;;
+;; ** Clocking automation
+;;
+;; With default `org-autotask-clock-in-actions', on clocking-in any of the tasks
+;; below, the actions in their properties will be executed. Naturally, only Org
+;; files you trust should be clocked in, because they can run arbitrary code.
+;; Each property can only be given once, except for the `:URL:' one. If adding
+;; new properties to the customization variable, multiple-value ones are
+;; specified by `:multi' key.
+;;
+;;     * TODO Do something at example.com                          :@online:
+;;     :PROPERTIES:
+;;     :URL: https://example.com
+;;     :END:
+;;
+;;     * TODO Do something at two websites                         :@online:
+;;     :PROPERTIES:
+;;     :URL: https://1.example.com
+;;     :URL+: https://2.example.com
+;;     :END:
+;;
+;;     * TODO Play macOS chess                                       :@home:
+;;     :PROPERTIES:
+;;     :APP: Chess.app
+;;     :END:
+;;
+;;     * TODO Lock screen and do something away from computer        :@home:
+;;     :PROPERTIES:
+;;     :SHELL: pmset displaysleepnow
+;;     :END:
+;;
+;;     * TODO Work on a certain file in Emacs                      :@office:
+;;     :PROPERTIES:
+;;     :VISIT: /path/to/file
+;;     :END:
+;;
+;;     * TODO Work on something that is called by Elisp            :@office:
+;;     :PROPERTIES:
+;;     :EVAL: (my-work)
+;;     :END:
+;;
+;;     * TODO Combine two actions                                  :@office:
+;;     :PROPERTIES:
+;;     :URL: https://example.com
+;;     :VISIT: /peth/to/file
+;;     :END:
+;;
+;; * Concepts
+;;
+;; - A list is a collection of items, task or otherwise, as in GTD. A list has
+;;   an Org tag for its items, a quick selection character, and a description.
+;;
+;; - A context is a place where some TODO items, but not necessarily others, can
+;;   be done. An item can belong to only one context. Items are assigned to
+;;   contexts with Org tags. One special context is "waiting-for" for tasks that
+;;   somebody else has to complete.
+;;
+;; - A project contains items (subprojects or TODO items) in its subtree. It is
+;;   tagged with the configurable project list-specific tag and also has a TODO
+;;   entry keyword.
+;;
+;; - Someday-maybe items are tagged with their category tag, which is configured
+;;   to be inheritable in Org, thus either the items themselves or one of the
+;;   outline ancestors have to be tagged with it. Items can be moved from and to
+;;   this state by refiling.
+;;
+;; * Configuration
+;;
+;; Since this package expects certain Org configuration, some variables should
+;; be left untouched, or they will be overwritten:
+;; - `org-todo-repeat-to-state'
+;; - `org-enforce-todo-dependencies'
+;; - `org-stuck-projects'
+;;
+;; Some other variables have to be set by user and then will be checked/modified
+;; during setup:
+;; - `org-todo-keywords' must contain all of the `org-autotask'-configured
+;;   keywords.
+;; - `org-use-tag-inheritance' must either be t, a string that matches the
+;;   someday/maybe tag, or be a list. If it's a list, the tag for someday/maybe
+;;   will be added there.
+;; - `org-tag-alist' must not have anything related to contexts, projects, and
+;;   someday/maybe, and they will be added to it.
+;;
+;; Tasks (and some other items such projects) are grouped into lists, as in GTD.
+;; The list-related customization is:
+;; - `org-autotask-contexts': An (elisp) list of GTD contexts, except for the
+;;   waiting-for one. They, together with the waiting-for context, are mutually
+;;   exclusive.
+;; - `org-autotask-waitingfor': The GTD waiting-for context. Defaults to
+;;   @waitingfor / w.
+;; - `org-autotask-projects': The GTD project list. Defaults to project / p.
+;; - `org-autotask-somedaymaybes': The GTD someday/maybe list. Defaults to
+;;   somedaymaybe / m.
+;;
+;; For actions, there are three customizable TODO entry keywords:
+;; - `org-autotask-keyword-next-action': The keyword for the next action (in the
+;;   GTD sense). Active projects have this keyword too. Defaults to TODO.
+;; - `org-autotask-keyword-done': The keyword for a completed task or project.
+;;   Defaults to DONE.
+;; - `org-autotask-keyword-cancelled': The keyword for a cancelled task or
+;;   project. Defaults to CANCELLED.
+;;
+;; For clocking automation:
+;; - `org-autotask-clock-gated-commands': A list of commands, which may only be
+;;   invoked with an Org clock running.
+;; - `org-autotask-clock-in-actions': a list of plists configuring automatic
+;;   actions to be executed on clocking-in the node that has one of the
+;;   configured properties. The pre-configured ones are URL, APP, SHELL, VISIT,
+;;   & EVAL as shown in the example above.
+;;
+;; * Usage
+;;
+;; Set the configuration as described above, then call `org-autotask-initialize'.
+;; Beware that calling it multiple times in the same session may have unexpected
+;; results on the Org variables it touches.
+;;
+;; ** Building Agenda Views
+;;
+;; There are a few functions that can be used in `org-agenda-custom-commands':
+;;
+;; - `org-autotask-agenda-block' (contexts &optional header): return a tags-todo
+;;   form to be included in a custom agenda view for either a single context or
+;;   a list of them. If a header is not passed and it's a single context, use
+;;   its description as the header.
+;;
+;; - `org-autotask-agenda' (context): return a sublist (everything except the
+;;   leading key) for a single `org-agenda-custom-commands' entry.
+;;
+;; - `org-autotask-agenda-somedaymaybe': return a sublist for a single custom
+;;   command entry for the someday/maybe items.
+;;
+;; - `org-autotask-agenda-active-non-project-tasks': return a sublist for active
+;;   next actions that are not under any project.
+;;
+;; - `org-autotask-agenda-archivable-tasks': return a tags form to be included
+;;   in a custom agenda view that shows completed items which are not under any
+;;   project.
+;;
+;; - `org-autotask-agenda-contextless-tasks': return a tags form to be included
+;;   in a custom agenda view that shows items which are not tagged with any
+;;   context.
+;;
+;; ** Elisp Automation Library
+;;
+;; - `org-autotask-require-org-clock': call this from interactive commands to
+;;   block them unless an Org clock is running.  For the commands written by
+;;   someone else, use `my-org-clock-gated-commands' instead.
+;;
+;; - `org-autotask-with-org-node-with-url' (url &rest body): a macro to find the
+;;   Org node with this URL across Org agenda files and then execute the body
+;;   forms there.
+;;
+;; - `org-autotask-clock-in-node-with-url' (url): find the Org node with this
+;;   URL and clock it in.
+;;
+;; - `org-autotask-with-different-org-clock' (&rest body): a macro to save the
+;;   current Org clock state, clock in the current Org node, execute the body
+;;   forms, and resume previous clocking, if any.
+;;
+;; - `org-autotask-insert-project' (title): insert a new project with the given
+;;   title at point.
+;;
+;; - `org-autotask-insert-waiting-for-next-action' (title): insert a new
+;;   waiting-for item at point.
+;;
+;; - `org-autotask-complete-item': mark the item at point (a next action or a
+;;   project) as completed.
+;;
+;; * Comparison with other `org' GTD packages
+;;
+;; ** org-gtd
+;;
+;; org-gtd is a full prescriptive GTD implementation, covering the whole
+;; workflow. This package, on the other hand, provides some of the building
+;; blocks to build your own implementation without prescribing the whole
+;; workflow.
+;;
+;; ** org-edna
+;;
+;; org-edna provides dependency management for org tasks for automation. While
+;; this package also focuses on automation, it does not focus on the
+;; dependencies much. Both packages can be used together.
 
 ;;; Code:
 
