@@ -2,11 +2,11 @@ name: Emacs Lisp CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
-permissions: { }
+permissions: {}
 
 jobs:
   test:
@@ -27,35 +27,35 @@ jobs:
       statuses: write
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Emacs
-      uses: purcell/setup-emacs@master
-      with:
-        version: ${{ matrix.emacs_version }}
+      - name: Set up Emacs
+        uses: purcell/setup-emacs@master
+        with:
+          version: ${{ matrix.emacs_version }}
 
-    - name: Install dependencies
-      run: |
-        emacs -Q --batch \
-              --eval "(require 'package)" \
-              --eval "(add-to-list 'package-archives '(\"melpa\" . \"https://melpa.org/packages/\") t)" \
-              --eval "(package-initialize)" \
-              --eval "(package-refresh-contents)" \
-              --eval "(package-install 'elisp-lint)" \
-              --eval "(package-install 'package-lint)"
+      - name: Install dependencies
+        run: |
+          emacs -Q --batch \
+                --eval "(require 'package)" \
+                --eval "(add-to-list 'package-archives '(\"melpa\" . \"https://melpa.org/packages/\") t)" \
+                --eval "(package-initialize)" \
+                --eval "(package-refresh-contents)" \
+                --eval "(package-install 'elisp-lint)" \
+                --eval "(package-install 'package-lint)"
 
-    - name: elisp-lint
-      run: |
-        emacs -Q --batch \
-              --eval "(package-initialize)" \
-              --eval "(require 'elisp-lint)" \
-              -f elisp-lint-files-batch ./*.el
+      - name: elisp-lint
+        run: |
+          emacs -Q --batch \
+                --eval "(package-initialize)" \
+                --eval "(require 'elisp-lint)" \
+                -f elisp-lint-files-batch ./*.el
 
-    - name: Run tests
-      run: |
-        emacs -Q --batch \
-              --eval "(package-initialize)" \
-              --eval "(add-to-list 'load-path (expand-file-name \".\"))" \
-              --eval "(require 'ert)" \
-              -l org-autotask.el -l org-autotask-test.el \
-              -f ert-run-tests-batch-and-exit
+      - name: Run tests
+        run: |
+          emacs -Q --batch \
+                --eval "(package-initialize)" \
+                --eval "(add-to-list 'load-path (expand-file-name \".\"))" \
+                --eval "(require 'ert)" \
+                -l org-autotask.el -l org-autotask-test.el \
+                -f ert-run-tests-batch-and-exit
