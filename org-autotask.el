@@ -146,7 +146,7 @@
 ;;   an Org tag for its items, a quick selection character, and a description.
 ;;
 ;; - A context is a place where some TODO items, but not necessarily others, can
-;;   be done.  An item can belong to only one context. Items are assigned to
+;;   be done.  An item can belong to only one context.  Items are assigned to
 ;;   contexts with Org tags.  One special context is "waiting-for" for tasks
 ;;   that somebody else has to complete.
 ;;
