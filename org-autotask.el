@@ -16,7 +16,7 @@
 ;;
 ;; ** Minimal configuration
 ;;
-;; A sample minimum configuration using the defaults. Note that it might be
+;; A sample minimum configuration using the defaults.  Note that it might be
 ;; useful to store the individual contexts in variables instead of calling
 ;; `'make-org-autotask-list' directly under `vector' if you want to refer to the
 ;; specific contexts while building agendas:
@@ -90,16 +90,16 @@
 ;;     (add-to-list 'org-autotask-clock-gated-commands #'magit-unstage)
 ;;
 ;; Be careful not to add the clocking-in itself nor some low-level command that
-;; would lock you out of Emacs. To do this for your own commands, the above
+;; would lock you out of Emacs.  To do this for your own commands, the above
 ;; method still works, but it might be more convenient to call
 ;; `org-autotask-require-org-clock' from the command itself instead.
 ;;
 ;; ** Clocking automation
 ;;
 ;; With default `org-autotask-clock-in-actions', on clocking-in any of the tasks
-;; below, the actions in their properties will be executed. Naturally, only Org
+;; below, the actions in their properties will be executed.  Naturally, only Org
 ;; files you trust should be clocked in, because they can run arbitrary code.
-;; Each property can only be given once, except for the `:URL:' one. If adding
+;; Each property can only be given once, except for the `:URL:' one.  If adding
 ;; new properties to the customization variable, multiple-value ones are
 ;; specified by `:multi' key.
 ;;
@@ -142,22 +142,22 @@
 ;;
 ;; * Concepts
 ;;
-;; - A list is a collection of items, task or otherwise, as in GTD. A list has
+;; - A list is a collection of items, task or otherwise, as in GTD.  A list has
 ;;   an Org tag for its items, a quick selection character, and a description.
 ;;
 ;; - A context is a place where some TODO items, but not necessarily others, can
-;;   be done. An item can belong to only one context. Items are assigned to
-;;   contexts with Org tags. One special context is "waiting-for" for tasks that
-;;   somebody else has to complete.
+;;   be done.  An item can belong to only one context. Items are assigned to
+;;   contexts with Org tags.  One special context is "waiting-for" for tasks
+;;   that somebody else has to complete.
 ;;
-;; - A project contains items (subprojects or TODO items) in its subtree. It is
+;; - A project contains items (subprojects or TODO items) in its subtree.  It is
 ;;   tagged with the configurable project list-specific tag and also has a TODO
 ;;   entry keyword.
 ;;
 ;; - Someday-maybe items are tagged with their category tag, which is configured
 ;;   to be inheritable in Org, thus either the items themselves or one of the
-;;   outline ancestors have to be tagged with it. Items can be moved from and to
-;;   this state by refiling.
+;;   outline ancestors have to be tagged with it.  Items can be moved from and
+;;   to this state by refiling.
 ;;
 ;; * Configuration
 ;;
@@ -172,7 +172,7 @@
 ;; - `org-todo-keywords' must contain all of the `org-autotask'-configured
 ;;   keywords.
 ;; - `org-use-tag-inheritance' must either be t, a string that matches the
-;;   someday/maybe tag, or be a list. If it's a list, the tag for someday/maybe
+;;   someday/maybe tag, or be a list.  If it's a list, the tag for someday/maybe
 ;;   will be added there.
 ;; - `org-tag-alist' must not have anything related to contexts, projects, and
 ;;   someday/maybe, and they will be added to it.
@@ -180,35 +180,35 @@
 ;; Tasks (and some other items such projects) are grouped into lists, as in GTD.
 ;; The list-related customization is:
 ;; - `org-autotask-contexts': An (elisp) list of GTD contexts, except for the
-;;   waiting-for one. They, together with the waiting-for context, are mutually
+;;   waiting-for one.  They, together with the waiting-for context, are mutually
 ;;   exclusive.
-;; - `org-autotask-waitingfor': The GTD waiting-for context. Defaults to
+;; - `org-autotask-waitingfor': The GTD waiting-for context.  Defaults to
 ;;   @waitingfor / w.
-;; - `org-autotask-projects': The GTD project list. Defaults to project / p.
-;; - `org-autotask-somedaymaybes': The GTD someday/maybe list. Defaults to
+;; - `org-autotask-projects': The GTD project list.  Defaults to project / p.
+;; - `org-autotask-somedaymaybes': The GTD someday/maybe list.  Defaults to
 ;;   somedaymaybe / m.
 ;;
 ;; For actions, there are three customizable TODO entry keywords:
 ;; - `org-autotask-keyword-next-action': The keyword for the next action (in the
-;;   GTD sense). Active projects have this keyword too. Defaults to TODO.
+;;   GTD sense).  Active projects have this keyword too.  Defaults to TODO.
 ;; - `org-autotask-keyword-done': The keyword for a completed task or project.
 ;;   Defaults to DONE.
 ;; - `org-autotask-keyword-cancelled': The keyword for a cancelled task or
-;;   project. Defaults to CANCELLED.
+;;   project.  Defaults to CANCELLED.
 ;;
 ;; For clocking automation:
 ;; - `org-autotask-clock-gated-commands': A list of commands, which may only be
 ;;   invoked with an Org clock running.
 ;; - `org-autotask-clock-in-actions': a list of plists configuring automatic
 ;;   actions to be executed on clocking-in the node that has one of the
-;;   configured properties. The pre-configured ones are URL, APP, SHELL, VISIT,
+;;   configured properties.  The pre-configured ones are URL, APP, SHELL, VISIT,
 ;;   & EVAL as shown in the example above.
 ;;
 ;; * Usage
 ;;
-;; Set the configuration as described above, then call `org-autotask-initialize'.
-;; Beware that calling it multiple times in the same session may have unexpected
-;; results on the Org variables it touches.
+;; Set the configuration as described above, then call
+;; `org-autotask-initialize'.  Beware that calling it multiple times in the same
+;; session may have unexpected results on the Org variables it touches.
 ;;
 ;; ** Building Agenda Views
 ;;
@@ -216,7 +216,7 @@
 ;;
 ;; - `org-autotask-agenda-block' (contexts &optional header): return a tags-todo
 ;;   form to be included in a custom agenda view for either a single context or
-;;   a list of them. If a header is not passed and it's a single context, use
+;;   a list of them.  If a header is not passed and it's a single context, use
 ;;   its description as the header.
 ;;
 ;; - `org-autotask-agenda' (context): return a sublist (everything except the
@@ -267,15 +267,15 @@
 ;; ** org-gtd
 ;;
 ;; org-gtd is a full prescriptive GTD implementation, covering the whole
-;; workflow. This package, on the other hand, provides some of the building
+;; workflow.  This package, on the other hand, provides some of the building
 ;; blocks to build your own implementation without prescribing the whole
 ;; workflow.
 ;;
 ;; ** org-edna
 ;;
-;; org-edna provides dependency management for org tasks for automation. While
+;; org-edna provides dependency management for org tasks for automation.  While
 ;; this package also focuses on automation, it does not focus on the
-;; dependencies much. Both packages can be used together.
+;; dependencies much.  Both packages can be used together.
 
 ;;; Code:
 

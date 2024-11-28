@@ -1,5 +1,6 @@
 ((emacs-lisp-mode . ((fill-column . 80)
                      (indent-tabs-mode . nil)
+                     (sentence-end-double-space . t)
                      (elisp-lint-indent-specs
                       . ((org-autotask-with-org-node-with-url . 1)
                          (org-autotask--test-fixture . 1)
