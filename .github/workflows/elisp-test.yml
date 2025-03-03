@@ -1,3 +1,4 @@
+---
 name: Emacs Lisp CI
 
 on:
@@ -15,10 +16,11 @@ jobs:
       fail-fast: false
       matrix:
         emacs_version:
-          - snapshot
-          - 29.4
-          - 28.2
-          - 27.2
+          - "snapshot"
+          - "30.1"
+          - "29.4"
+          - "28.2"
+          - "27.2"
 
     permissions:
       contents: read
