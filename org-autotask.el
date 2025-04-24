@@ -1,5 +1,7 @@
 ;;; org-autotask.el --- My GTD setup in `org' -*- lexical-binding: t -*-
 
+;; Copyright (C) 2024-2025 Laurynas Biveinis
+
 ;; Version: 0.1
 ;; URL: https://github.com/laurynas-biveinis/org-autotask
 ;; Package-Requires: ((emacs "27.1"))
