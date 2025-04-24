@@ -1,6 +1,7 @@
 #+TITLE: org-autotask: building agendas and Org automation
 
 [[https://github.com/laurynas-biveinis/org-autotask/actions/][file:https://github.com/laurynas-biveinis/org-autotask/actions/workflows/elisp-test.yml/badge.svg]]
+[[https://github.com/laurynas-biveinis/org-autotask/actions/workflows/linter.yml/badge.svg][file:https://github.com/laurynas-biveinis/org-autotask/actions/workflows/linter.yml/badge.svg]]
 
 This is a set of building blocks for a task management implementation in Org
 following GTD (Getting Things Done), with focus on agenda views for contexts and
