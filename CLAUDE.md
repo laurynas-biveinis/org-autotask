@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Run all tests: `make test` or `emacs -batch -l ert -l org-autotask.el -l org-autotask-test.el -f ert-run-tests-batch-and-exit`
 - Run a single test: `emacs -batch -l ert -l org-autotask.el -l org-autotask-test.el --eval "(ert-run-test-interactively 'test-name-here)"`
 - Byte-compile: `emacs -batch -f batch-byte-compile org-autotask.el`
+- Check formatting: `./check.sh` (Runs Prettier on CLAUDE.md)
 
 ## Code Style Guidelines
 
