@@ -11,8 +11,8 @@
 
 ;; This is a set of building blocks for a task management implementation in Org
 ;; following GTD (Getting Things Done), with focus on agenda views for contexts
-;; and automation, for clocking and writing own ones in Elisp.  Assumes
-;; familiarity with Org.
+;; and automation, for clocking and writing own ones in Elisp.  Also includes
+;; utilities for working with Org entries.  Assumes familiarity with Org.
 ;;
 ;; * Example
 ;;
@@ -464,6 +464,24 @@ property."
   "Return user error if no `org' task is currently clocked in."
   (unless (org-clocking-p)
     (user-error "No org task is clocked-in")))
+
+;;;###autoload
+(defun org-autotask-open-url-at-point ()
+  "Open URL properties from the current Org entry without clocking in.
+This function reads the URL property (and URL+ for additional URLs) from
+the Org entry at point and opens them in the browser using `browse-url'.
+
+Unlike the automatic URL opening that happens during clock-in, this
+allows manual URL opening for quick reference without starting time tracking."
+  (interactive)
+  (unless (derived-mode-p 'org-mode)
+    (user-error "Not in an Org buffer"))
+  (save-excursion
+    (org-back-to-heading t)
+    (if-let ((urls (org-entry-get-multivalued-property (point) "URL")))
+        (dolist (url urls)
+          (browse-url url))
+      (message "No URL property found for this entry"))))
 
 ;; URL property support for custom automation
 

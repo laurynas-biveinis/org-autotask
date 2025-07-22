@@ -99,6 +99,16 @@ should be clocked in, because they can run arbitrary code. Each property can onl
 given once, except for the ~:URL:~ one. If adding new properties to the customization
 variable, multiple-value ones are specified by ~:multi~ key.
 
+*** Manual URL opening
+
+To open URLs from an Org entry without clocking in, use:
+#+BEGIN_SRC emacs-lisp
+M-x org-autotask-open-url-at-point
+#+END_SRC
+
+This is useful for quickly accessing resources without starting time tracking.
+We recommend binding it to a convenient key, for example ~C-c C-x C-u~.
+
 #+BEGIN_SRC org
 * TODO Do something at example.com                                          :@online:
 :PROPERTIES:

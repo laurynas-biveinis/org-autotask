@@ -770,6 +770,56 @@ The marker can be returned by `org-autotask--insert-heading-marker'."
     (org-autotask--should-clocked-heading-pos item0-mark)
     (org-clock-out)))
 
+;; Test `org-autotask-open-url-at-point'
+
+(ert-deftest org-autotask-open-url-at-point-basic ()
+  "Basic test for `org-autotask-open-url-at-point'."
+  (org-autotask--buffer-test (url-opened)
+    (cl-letf (((symbol-function 'browse-url)
+               (lambda (url) (setq url-opened url))))
+      (org-insert-todo-heading-respect-content)
+      (insert "Test task")
+      (org-set-property "URL" "https://example.com")
+      (org-autotask-open-url-at-point)
+      (should (equal url-opened "https://example.com")))))
+
+(ert-deftest org-autotask-open-url-at-point-multiple-urls ()
+  "Test `org-autotask-open-url-at-point' with multiple URLs."
+  (org-autotask--buffer-test (urls-opened)
+    (cl-letf (((symbol-function 'browse-url)
+               (lambda (url) (push url urls-opened))))
+      (org-insert-todo-heading-respect-content)
+      (insert "Test task")
+      (org-set-property "URL" "https://1.example.com")
+      (org-entry-add-to-multivalued-property (point) "URL" "https://2.example.com")
+      (org-autotask-open-url-at-point)
+      ;; When using org-entry-add-to-multivalued-property, URLs are space-separated
+      (should (member "https://1.example.com" urls-opened))
+      (should (member "https://2.example.com" urls-opened))
+      (should (= (length urls-opened) 2)))))
+
+(ert-deftest org-autotask-open-url-at-point-no-url ()
+  "Test `org-autotask-open-url-at-point' when no URL property exists."
+  (org-autotask--buffer-test ()
+    (cl-letf (((symbol-function 'browse-url)
+               (lambda (_) (error "Should not be called"))))
+      (org-insert-todo-heading-respect-content)
+      (insert "Test task without URL")
+      (let ((messages-buffer (current-buffer)))
+        (cl-letf (((symbol-function 'message)
+                   (lambda (fmt &rest args)
+                     (with-current-buffer messages-buffer
+                       (insert (apply #'format fmt args))))))
+          (org-autotask-open-url-at-point)
+          (should (string-match "No URL property found" 
+                                (buffer-string))))))))
+
+(ert-deftest org-autotask-open-url-at-point-not-in-org-mode ()
+  "Test `org-autotask-open-url-at-point' errors when not in Org mode."
+  (with-temp-buffer
+    (fundamental-mode)
+    (should-error (org-autotask-open-url-at-point) :type 'user-error)))
+
 ;; TODO(laurynas): idempotency
 ;; TODO(laurynas): uniqueness in tags
 ;; TODO(laurynas): uniqueness in keys
