@@ -1,22 +1,24 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with
+code in this repository. These guidelines build on the common user's
+guidelines at ~/.claude/CLAUDE.md locally or
+https://raw.githubusercontent.com/laurynas-biveinis/dotfiles/refs/heads/master/ai/.claude/CLAUDE.md
+online.
+
+User-facing documentation is in README.org.
+
+This is an Elisp project, and should follow user's Elisp guidelines at
+@~/.claude/CLAUDE-elisp.md.
 
 ## Build/Test Commands
 
 - Run all tests: `make test` or `emacs -batch -l ert -l org-autotask.el -l org-autotask-test.el -f ert-run-tests-batch-and-exit`
 - Run a single test: `emacs -batch -l ert -l org-autotask.el -l org-autotask-test.el --eval "(ert-run-test-interactively 'test-name-here)"`
 - Byte-compile: `emacs -batch -f batch-byte-compile org-autotask.el`
-- Check formatting: `./check.sh` (Runs Prettier on CLAUDE.md)
 
 ## Code Style Guidelines
 
-- Lexical binding is used throughout (`-*- lexical-binding: t -*-`)
-- Follow Emacs Lisp conventions with kebab-case naming
-- Use `cl-lib` for modern Common Lisp constructs (cl-defun, cl-letf, etc.)
-- Documentation strings for all public functions
 - Use `###autoload` for functions meant to be autoloaded
-- Organize code with (require) statements at the top
 - Clear error messages should use `user-error`
-- Use proper indentation (2 spaces) for Emacs Lisp code
 - Follow existing code patterns when adding new functionality
