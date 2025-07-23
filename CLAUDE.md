@@ -13,8 +13,20 @@ This is an Elisp project, and should follow user's Elisp guidelines at
 
 ## Build/Test Commands
 
-- Run all tests: `make test` or `emacs -batch -l ert -l org-autotask.el -l org-autotask-test.el -f ert-run-tests-batch-and-exit`
-- Run a single test: `emacs -batch -l ert -l org-autotask.el -l org-autotask-test.el --eval "(ert-run-test-interactively 'test-name-here)"`
+- Run all tests: `make test` or:
+
+  ```bash
+  emacs -batch -l ert -l org-autotask.el -l org-autotask-test.el \
+        -f ert-run-tests-batch-and-exit
+  ```
+
+- Run a single test:
+
+  ```bash
+  emacs -batch -l ert -l org-autotask.el -l org-autotask-test.el \
+        --eval "(ert-run-test-interactively 'test-name-here)"
+  ```
+
 - Byte-compile: `emacs -batch -f batch-byte-compile org-autotask.el`
 
 ## Code Style Guidelines
