@@ -478,7 +478,7 @@ allows manual URL opening for quick reference without starting time tracking."
     (user-error "Not in an Org buffer"))
   (save-excursion
     (org-back-to-heading t)
-    (if-let ((urls (org-entry-get-multivalued-property (point) "URL")))
+    (if-let* ((urls (org-entry-get-multivalued-property (point) "URL")))
         (dolist (url urls)
           (browse-url url))
       (message "No URL property found for this entry"))))
