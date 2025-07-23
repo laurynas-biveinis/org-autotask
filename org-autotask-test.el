@@ -791,9 +791,11 @@ The marker can be returned by `org-autotask--insert-heading-marker'."
       (org-insert-todo-heading-respect-content)
       (insert "Test task")
       (org-set-property "URL" "https://1.example.com")
-      (org-entry-add-to-multivalued-property (point) "URL" "https://2.example.com")
+      (org-entry-add-to-multivalued-property
+       (point) "URL" "https://2.example.com")
       (org-autotask-open-url-at-point)
-      ;; When using org-entry-add-to-multivalued-property, URLs are space-separated
+      ;; When using org-entry-add-to-multivalued-property,
+      ;; URLs are space-separated
       (should (member "https://1.example.com" urls-opened))
       (should (member "https://2.example.com" urls-opened))
       (should (= (length urls-opened) 2)))))
@@ -811,7 +813,7 @@ The marker can be returned by `org-autotask--insert-heading-marker'."
                      (with-current-buffer messages-buffer
                        (insert (apply #'format fmt args))))))
           (org-autotask-open-url-at-point)
-          (should (string-match "No URL property found" 
+          (should (string-match "No URL property found"
                                 (buffer-string))))))))
 
 (ert-deftest org-autotask-open-url-at-point-not-in-org-mode ()
