@@ -27,6 +27,9 @@ jobs:
       packages: read
       # To report GitHub Actions status checks
       statuses: write
+      # To create test report checks
+      checks: write
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v4
@@ -54,6 +57,8 @@ jobs:
                 -f elisp-lint-files-batch ./*.el
 
       - name: Run tests
+        env:
+          EMACS_TEST_JUNIT_REPORT: ${{ (matrix.emacs_version != '27.2' && matrix.emacs_version != '28.2') && 'org-autotask-test.xml' || '' }}
         run: |
           emacs -Q --batch \
                 --eval "(package-initialize)" \
@@ -61,3 +66,19 @@ jobs:
                 --eval "(require 'ert)" \
                 -l org-autotask.el -l org-autotask-test.el \
                 -f ert-run-tests-batch-and-exit
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: matrix.emacs_version != '27.2' && matrix.emacs_version != '28.2'
+        with:
+          name: test-results-emacs-${{ matrix.emacs_version }}
+          path: org-autotask-test.xml
+          retention-days: 7
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: matrix.emacs_version != '27.2' && matrix.emacs_version != '28.2'
+        with:
+          name: Test Results - Emacs ${{ matrix.emacs_version }}
+          path: org-autotask-test.xml
+          reporter: java-junit
