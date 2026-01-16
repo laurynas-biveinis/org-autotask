@@ -49,8 +49,8 @@ jobs:
                 --eval "(add-to-list 'package-archives '(\"melpa\" . \"https://melpa.org/packages/\") t)" \
                 --eval "(package-initialize)" \
                 --eval "(package-refresh-contents)" \
-                --eval "(package-install 'elisp-lint)" \
-                --eval "(package-install 'package-lint)"
+                --eval "(unless (package-installed-p 'elisp-lint) (package-install 'elisp-lint))" \
+                --eval "(unless (package-installed-p 'package-lint) (package-install 'package-lint))"
 
       - name: elisp-lint
         run: |
