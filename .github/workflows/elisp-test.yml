@@ -33,8 +33,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Set up Emacs
+        # zizmor: ignore[unpinned-uses]
         uses: purcell/setup-emacs@master
         with:
           version: ${{ matrix.emacs_version }}
@@ -76,6 +79,7 @@ jobs:
           retention-days: 7
 
       - name: Test Report
+        # zizmor: ignore[unpinned-uses]
         uses: dorny/test-reporter@v1
         if: matrix.emacs_version != '27.2' && matrix.emacs_version != '28.2'
         with:
