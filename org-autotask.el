@@ -1034,7 +1034,7 @@ Returns the number of log entries archived."
                                         (seconds-to-time
                                          (* days 24 60 60))))
          (archive-file (car (org-archive--compute-location
-                            org-archive-location)))
+                             org-archive-location)))
          (entries (org-autotask--collect-old-log-entries threshold-time))
          (total-count 0))
     (when entries

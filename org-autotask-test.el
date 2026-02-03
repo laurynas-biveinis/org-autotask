@@ -1011,7 +1011,7 @@ The format matches Org's default `org-log-note-headings' state format."
         (should (re-search-forward "^CLOCK:" nil t))))))
 
 (ert-deftest org-autotask-log-archive-old-no-drawer ()
-  "Test `org-autotask-log-archive-old' with `org-clock-into-drawer' as nil."
+  "Test archiving old logs when variable `org-clock-into-drawer' is nil."
   (org-autotask-test--with-temp-archive ((org-clock-into-drawer nil))
     (let ((old-clock (org-autotask-test--make-old-clock-string 400)))
       ;; Create source file with clock not in drawer
