@@ -1,4 +1,4 @@
-;;; org-autotask-test.el --- Tests for org-autotask.el. -*- lexical-binding: t -*-
+;;; org-autotask-test.el --- Tests for org-autotask -*- lexical-binding: t -*-
 
 ;;; Commentary:
 ;; Test suite for org-autotask.el using ERT.
@@ -1011,9 +1011,8 @@ The format matches Org's default `org-log-note-headings' state format."
         (should (re-search-forward "^CLOCK:" nil t))))))
 
 (ert-deftest org-autotask-log-archive-old-no-drawer ()
-  "Test `org-autotask-log-archive-old' when `org-clock-into-drawer' is nil."
-  (org-autotask-test--with-temp-archive
-      ((org-clock-into-drawer nil))
+  "Test `org-autotask-log-archive-old' with `org-clock-into-drawer' as nil."
+  (org-autotask-test--with-temp-archive ((org-clock-into-drawer nil))
     (let ((old-clock (org-autotask-test--make-old-clock-string 400)))
       ;; Create source file with clock not in drawer
       (with-temp-file temp-file
@@ -1039,8 +1038,7 @@ The format matches Org's default `org-log-note-headings' state format."
 
 (ert-deftest org-autotask-log-archive-old-custom-drawer ()
   "Test `org-autotask-log-archive-old' with custom drawer name."
-  (org-autotask-test--with-temp-archive
-      ((org-clock-into-drawer "CLOCKING"))
+  (org-autotask-test--with-temp-archive ((org-clock-into-drawer "CLOCKING"))
     (let ((old-clock (org-autotask-test--make-old-clock-string 400)))
       ;; Create source file with clock in custom drawer
       (with-temp-file temp-file
@@ -1095,9 +1093,11 @@ The format matches Org's default `org-log-note-headings' state format."
       ;; Archive should have both headings
       (with-current-buffer (find-file-noselect archive-file)
         (goto-char (point-min))
-        (should (re-search-forward "^\\* Heading One.*:archived_logs:" nil t))
+        (should (re-search-forward
+                 "^\\* Heading One.*:archived_logs:" nil t))
         (goto-char (point-min))
-        (should (re-search-forward "^\\* Heading Two.*:archived_logs:" nil t))))))
+        (should (re-search-forward
+                 "^\\* Heading Two.*:archived_logs:" nil t))))))
 
 (ert-deftest org-autotask-log-archive-old-running-clock ()
   "Test that `org-autotask-log-archive-old' does not archive running clocks."
@@ -1142,9 +1142,9 @@ The format matches Org's default `org-log-note-headings' state format."
           (should-not (file-exists-p archive-file)))))))
 
 (ert-deftest org-autotask-log-archive-old-old-and-recent ()
-  "Test `org-autotask-log-archive-old' archives old entries but preserves recent."
+  "Test `org-autotask-log-archive-old' archives old, preserves recent."
   (org-autotask-test--with-temp-archive ()
-    ;; Create entries at 364 days (should not be archived with 365-day threshold)
+    ;; Create entries at 364 days (not archived with 365-day threshold)
     ;; and ones at 366 days (should be archived).  Using 364 instead of 365
     ;; provides margin for time elapsed between test setup and execution.
     (let ((recent-clock (org-autotask-test--make-old-clock-string 364))
@@ -1192,9 +1192,11 @@ The format matches Org's default `org-log-note-headings' state format."
       (with-current-buffer (find-file-noselect archive-file)
         (goto-char (point-min))
         ;; Heading should be just the leaf node
-        (should (re-search-forward "^\\* Specific Task.*:archived_logs:" nil t))
+        (should (re-search-forward
+                 "^\\* Specific Task.*:archived_logs:" nil t))
         ;; ARCHIVE_OLPATH should contain parent path
-        (should (re-search-forward ":ARCHIVE_OLPATH: Project A/Task Group" nil t))
+        (should (re-search-forward
+                 ":ARCHIVE_OLPATH: Project A/Task Group" nil t))
         ;; ARCHIVE_FILE should be present
         (goto-char (point-min))
         (should (re-search-forward ":ARCHIVE_FILE:" nil t))))))
@@ -1250,8 +1252,10 @@ function should error before prompting for the days threshold."
       (revert-buffer t t)
       (goto-char (point-min))
       ;; Should have exactly one archived_logs heading
-      (should (re-search-forward "^\\* Test Heading.*:archived_logs:" nil t))
-      (should-not (re-search-forward "^\\* Test Heading.*:archived_logs:" nil t))
+      (should (re-search-forward
+               "^\\* Test Heading.*:archived_logs:" nil t))
+      (should-not (re-search-forward
+                   "^\\* Test Heading.*:archived_logs:" nil t))
       ;; Should have exactly one LOGBOOK drawer with clock and state change
       (goto-char (point-min))
       (should (re-search-forward "^:LOGBOOK:" nil t))
@@ -1276,7 +1280,7 @@ function should error before prompting for the days threshold."
           (insert ":END:\n")
           (save-buffer)
           (org-autotask-log-archive-old 365)
-          ;; Archive clock from "Project B / Task" (same task name, different path)
+          ;; Archive clock from "Project B / Task" (same name, different path)
           (erase-buffer)
           (insert "* Project B\n")
           (insert "** Task\n")

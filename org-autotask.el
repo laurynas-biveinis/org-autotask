@@ -814,7 +814,8 @@ HEADING and OLPATH identify the task, SOURCE-FILE is the file path."
          (entry-data (list :begin begin :end end :text text))
          (existing (gethash key result)))
     (if existing
-        (plist-put existing :entries (cons entry-data (plist-get existing :entries)))
+        (plist-put existing :entries
+                   (cons entry-data (plist-get existing :entries)))
       (puthash key
                (list :heading heading
                      :olpath olpath
@@ -877,7 +878,8 @@ The :entries value is a list of plists with :begin, :end, and :text."
     ;; Collect old clocks
     (org-element-map (org-element-parse-buffer) 'clock
       (lambda (clock)
-        (org-autotask--process-old-clock clock threshold-time result source-file)))
+        (org-autotask--process-old-clock
+         clock threshold-time result source-file)))
     ;; Collect old state changes
     (org-autotask--collect-old-state-changes threshold-time result source-file)
     (hash-table-values result)))
@@ -959,7 +961,8 @@ to it.  Otherwise creates a new entry."
     (with-current-buffer archive-buffer
       (unless (derived-mode-p 'org-mode)
         (org-mode))
-      (if-let* ((existing-pos (org-autotask--find-archive-heading heading olpath)))
+      (if-let* ((existing-pos
+                 (org-autotask--find-archive-heading heading olpath)))
           ;; Found existing entry - append entries
           (progn
             (goto-char existing-pos)
@@ -1030,7 +1033,8 @@ Returns the number of log entries archived."
          (threshold-time (time-subtract (current-time)
                                         (seconds-to-time
                                          (* days 24 60 60))))
-         (archive-file (car (org-archive--compute-location org-archive-location)))
+         (archive-file (car (org-archive--compute-location
+                            org-archive-location)))
          (entries (org-autotask--collect-old-log-entries threshold-time))
          (total-count 0))
     (when entries
