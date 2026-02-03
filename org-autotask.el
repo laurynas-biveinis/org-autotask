@@ -285,6 +285,7 @@
 (require 'cl-lib)
 (require 'org)
 (require 'org-agenda)
+(require 'org-archive)
 (require 'org-clock)
 (require 'org-element)
 
@@ -404,6 +405,18 @@ configuration, with an optional fast state selection character."
   :type '(repeat symbol)
   :group 'org-autotask
   :package-version '(org-autotask . "0.1"))
+
+;; Clock archiving
+
+;;;###autoload
+(defcustom org-autotask-clock-archive-default-days 365
+  "Clock data age threshold in days for `org-autotask-clock-archive-old'."
+  :type 'integer
+  :group 'org-autotask
+  :package-version '(org-autotask . "0.1"))
+
+(defconst org-autotask-clock-archive-tag "archived_clocks"
+  "The tag that marks a heading as containing archived clock entries.")
 
 ;;;###autoload
 (defcustom org-autotask-clock-in-actions
@@ -753,6 +766,214 @@ The heading must be already created."
 (defun org-autotask-complete-item ()
   "Mark the item (a task or a project) at point as done."
   (org-todo org-autotask-keyword-done))
+
+;; Clock archiving
+
+(defun org-autotask--clock-older-than-p (clock threshold-time)
+  "Return non-nil if CLOCK element ended before THRESHOLD-TIME."
+  (let* ((timestamp (org-element-property :value clock))
+         (end-time (org-timestamp-to-time timestamp t)))
+    (and end-time (time-less-p end-time threshold-time))))
+
+(defun org-autotask--process-old-clock (clock threshold-time result source-file)
+  "Process CLOCK element if it's old enough to archive.
+THRESHOLD-TIME is the cutoff time.  Old clocks are added to RESULT hash table
+which stores entries in final result format, keyed by (heading . olpath).
+SOURCE-FILE is the file path to record in entries."
+  (when (and (not (eq (org-element-property :status clock) 'running))
+             (org-element-property :duration clock)
+             (org-autotask--clock-older-than-p clock threshold-time))
+    (save-excursion
+      (goto-char (org-element-property :begin clock))
+      (org-back-to-heading t)
+      (let* ((heading (org-get-heading t t t t))
+             (olpath (org-get-outline-path))
+             (key (cons heading olpath))
+             (clock-begin (org-element-property :begin clock))
+             (clock-end (org-element-property :end clock))
+             (clock-data (list :begin clock-begin
+                               :end clock-end
+                               :text (string-trim
+                                      (buffer-substring-no-properties
+                                       clock-begin clock-end))))
+             (existing (gethash key result)))
+        (if existing
+            (plist-put existing :clocks (cons clock-data (plist-get existing :clocks)))
+          (puthash key
+                   (list :heading heading
+                         :olpath olpath
+                         :file source-file
+                         :clocks (list clock-data))
+                   result))))))
+
+(defun org-autotask--collect-old-clocks (threshold-time)
+  "Collect clock entries in current buffer older than THRESHOLD-TIME.
+Return a list of plists, each with :heading, :olpath, :file, and :clocks.
+The :clocks value is a list of plists with :begin, :end, and :text."
+  (let ((result (make-hash-table :test 'equal))
+        (source-file (buffer-file-name)))
+    (org-element-map (org-element-parse-buffer) 'clock
+      (lambda (clock)
+        (org-autotask--process-old-clock clock threshold-time result source-file)))
+    (hash-table-values result)))
+
+(defun org-autotask--get-clock-drawer-name ()
+  "Return the drawer name for clock entries, or nil if no drawer is used."
+  (when org-clock-into-drawer
+    (if (stringp org-clock-into-drawer)
+        org-clock-into-drawer
+      "LOGBOOK")))
+
+(defun org-autotask--format-clocks-for-archive (clocks)
+  "Format CLOCKS list for insertion into archive file.
+CLOCKS is a list of plists with :text property."
+  (if-let* ((drawer-name (org-autotask--get-clock-drawer-name)))
+      (concat ":" drawer-name ":\n"
+              (mapconcat (lambda (c) (plist-get c :text)) clocks "\n")
+              "\n:END:\n")
+    (concat (mapconcat (lambda (c) (plist-get c :text)) clocks "\n") "\n")))
+
+(defun org-autotask--find-archive-heading (heading olpath)
+  "Find existing archive heading matching HEADING and OLPATH.
+OLPATH is a string.  Returns point at the heading, or nil if not found.
+Matches headings with `archived_clocks' tag and same ARCHIVE_OLPATH property."
+  (save-excursion
+    (goto-char (point-min))
+    (let ((found nil))
+      (while (and (not found)
+                  (re-search-forward
+                   (format "^\\* %s\\s-+:%s:"
+                           (regexp-quote heading)
+                           org-autotask-clock-archive-tag)
+                   nil t))
+        (let ((entry-olpath (or (org-entry-get (point) "ARCHIVE_OLPATH") "")))
+          (when (equal olpath entry-olpath)
+            (setq found (line-beginning-position)))))
+      found)))
+
+(defun org-autotask--insert-clocks-at-end-of-subtree (formatted)
+  "Insert FORMATTED clock entries at end of current subtree.
+If a drawer exists, insert before :END:.  Otherwise insert at subtree end."
+  (if-let* ((drawer-name (org-autotask--get-clock-drawer-name)))
+      ;; Find existing drawer or insert new one
+      (let ((subtree-end (save-excursion (org-end-of-subtree t) (point))))
+        (if (re-search-forward
+             (format "^[ \t]*:%s:[ \t]*$" (regexp-quote drawer-name))
+             subtree-end t)
+            ;; Found drawer - insert before :END:
+            (progn
+              (re-search-forward "^[ \t]*:END:[ \t]*$" subtree-end t)
+              (goto-char (match-beginning 0))
+              ;; Insert just the clock lines, without drawer markers
+              (dolist (line (split-string formatted "\n" t))
+                (unless (or (string-match-p "^:" line)
+                            (string-match-p "^:END:" line))
+                  (insert line "\n"))))
+          ;; No drawer - insert at end of subtree
+          (goto-char subtree-end)
+          (insert formatted)))
+    ;; No drawer config - insert at end of subtree
+    (org-end-of-subtree t)
+    (insert formatted)))
+
+(defun org-autotask--archive-clocks (entry archive-file)
+  "Archive clocks from ENTRY to ARCHIVE-FILE.
+ENTRY is a plist with :heading, :olpath, :file, and :clocks.
+If an existing archive entry matches the heading and olpath, appends clocks
+to it.  Otherwise creates a new entry."
+  (let* ((heading (plist-get entry :heading))
+         (olpath (string-join (plist-get entry :olpath) "/"))
+         (source-file (plist-get entry :file))
+         (clocks (plist-get entry :clocks))
+         (formatted (org-autotask--format-clocks-for-archive clocks))
+         (archive-buffer (find-file-noselect archive-file)))
+    (with-current-buffer archive-buffer
+      (unless (derived-mode-p 'org-mode)
+        (org-mode))
+      (if-let* ((existing-pos (org-autotask--find-archive-heading heading olpath)))
+          ;; Found existing entry - append clocks
+          (progn
+            (goto-char existing-pos)
+            (org-autotask--insert-clocks-at-end-of-subtree formatted))
+        ;; No existing entry - create new one at end
+        (goto-char (point-max))
+        (unless (bolp) (insert "\n"))
+        ;; Create new heading with archive tag
+        (insert (format "* %s :%s:\n" heading org-autotask-clock-archive-tag))
+        ;; Add ARCHIVE_* properties like Org does
+        (insert ":PROPERTIES:\n")
+        (when (not (string-empty-p olpath))
+          (insert (format ":ARCHIVE_OLPATH: %s\n" olpath)))
+        (when source-file
+          (insert (format ":ARCHIVE_FILE: %s\n" source-file)))
+        (insert ":END:\n")
+        ;; Insert clock entries
+        (insert formatted))
+      (save-buffer))))
+
+(defun org-autotask--delete-clocks (entries)
+  "Delete clock entries from source buffer.
+ENTRIES is a list of plists with :clocks.
+Deletes in reverse position order to preserve positions."
+  (let ((all-positions nil))
+    (dolist (entry entries)
+      (dolist (clock (plist-get entry :clocks))
+        (push (cons (plist-get clock :begin) (plist-get clock :end))
+              all-positions)))
+    ;; Sort by begin position descending
+    (setq all-positions (sort all-positions
+                              (lambda (a b) (> (car a) (car b)))))
+    ;; Delete each clock entry
+    (dolist (pos all-positions)
+      (delete-region (car pos) (cdr pos)))))
+
+(defun org-autotask--remove-empty-drawers ()
+  "Remove empty LOGBOOK drawers from current buffer."
+  (let ((drawer-name (org-autotask--get-clock-drawer-name)))
+    (when drawer-name
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward
+                (format "^[ \t]*:%s:[ \t]*\n[ \t]*:END:[ \t]*\n?"
+                        (regexp-quote drawer-name))
+                nil t)
+          (replace-match ""))))))
+
+;;;###autoload
+(defun org-autotask-clock-archive-old (&optional days)
+  "Archive CLOCK entries older than DAYS days from current buffer.
+With \\[universal-argument], prompt for threshold days.
+Without prefix arg, uses `org-autotask-clock-archive-default-days'.
+Returns the number of clock entries archived."
+  (interactive
+   (progn
+     (unless (derived-mode-p 'org-mode)
+       (user-error "Not in an Org buffer"))
+     (list (if current-prefix-arg
+               (read-number "Archive clocks older than (days): "
+                            org-autotask-clock-archive-default-days)
+             org-autotask-clock-archive-default-days))))
+  ;; Check for non-interactive calls
+  (unless (derived-mode-p 'org-mode)
+    (user-error "Not in an Org buffer"))
+  (let* ((days (or days org-autotask-clock-archive-default-days))
+         (threshold-time (time-subtract (current-time)
+                                        (seconds-to-time
+                                         (* days 24 60 60))))
+         (archive-file (car (org-archive--compute-location org-archive-location)))
+         (entries (org-autotask--collect-old-clocks threshold-time))
+         (total-count 0))
+    (when entries
+      ;; First, archive clocks
+      (dolist (entry entries)
+        (setq total-count (+ total-count (length (plist-get entry :clocks))))
+        (org-autotask--archive-clocks entry archive-file))
+      ;; Then delete from source
+      (org-autotask--delete-clocks entries)
+      (org-autotask--remove-empty-drawers)
+      (save-buffer))
+    (message "Archived %d clock entries" total-count)
+    total-count))
 
 (provide 'org-autotask)
 ;;; org-autotask.el ends here

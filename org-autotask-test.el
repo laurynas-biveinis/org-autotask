@@ -71,6 +71,9 @@
           (org-todo-keywords
            '((sequence "TODO(t!)" "|" "DONE(d!)" "CANCELLED(c!)")))
           (org-clock-in-hook nil)
+          ;; Prevent dangling clock prompts in batch mode
+          (org-clock-persist nil)
+          (org-clock-auto-clock-resolution nil)
           (current-clock-marker (when (org-clocking-p)
                                   (copy-marker org-clock-marker)))
           ,@varlist)
@@ -826,6 +829,348 @@ The marker can be returned by `org-autotask--insert-heading-marker'."
 ;; TODO(laurynas): uniqueness in tags
 ;; TODO(laurynas): uniqueness in keys
 ;; TODO(laurynas): uniqueness between contexts and waitingfor
+
+;; Test clock archiving
+
+(defmacro org-autotask-test--with-temp-archive (varlist &rest body)
+  "Set up temp Org file with archive location and execute BODY.
+VARLIST bindings are added to the fixture.  The following variables are bound:
+- `temp-file': the source Org file path
+- `archive-file': the archive file path (temp-file_archive)
+These files are cleaned up after BODY executes."
+  (declare (indent 1) (debug t))
+  `(org-autotask--test-fixture
+       ((temp-file (make-temp-file "org-clock-archive" nil ".org"))
+        (archive-file (concat temp-file "_archive"))
+        (org-clock-into-drawer t)
+        ,@varlist)
+     (unwind-protect
+         (progn ,@body)
+       (delete-file temp-file)
+       (delete-file archive-file))))
+
+(defun org-autotask-test--make-old-clock-string (days-ago)
+  "Return a CLOCK entry string for a time DAYS-AGO days in the past."
+  (let* ((now (current-time))
+         (seconds-per-day (* 24 60 60))
+         (old-time (time-subtract now (seconds-to-time
+                                       (* days-ago seconds-per-day))))
+         (end-time (time-add old-time (seconds-to-time 3600))))
+    (format "CLOCK: %s--%s =>  1:00"
+            (format-time-string "[%Y-%m-%d %a %H:%M]" old-time)
+            (format-time-string "[%Y-%m-%d %a %H:%M]" end-time))))
+
+(ert-deftest org-autotask-clock-archive-old-basic ()
+  "Basic test for `org-autotask-clock-archive-old'."
+  (org-autotask-test--with-temp-archive ()
+    (let ((old-clock (org-autotask-test--make-old-clock-string 400)))
+      ;; Create source file with an old clock
+      (with-temp-file temp-file
+        (insert "* Test Heading\n")
+        (insert ":LOGBOOK:\n")
+        (insert old-clock "\n")
+        (insert ":END:\n"))
+      ;; Archive old clocks
+      (with-current-buffer (find-file-noselect temp-file)
+        (let* ((org-archive-location (concat archive-file "::"))
+               (count (org-autotask-clock-archive-old 365)))
+          (should (= count 1))
+          ;; Source file should have no CLOCK entries and no empty drawer
+          (goto-char (point-min))
+          (should-not (re-search-forward "^CLOCK:" nil t))
+          (should-not (re-search-forward "^:LOGBOOK:" nil t))
+          (should-not (re-search-forward "^:END:" nil t))
+          ;; Archive file should have the clock under matching heading
+          (should (file-exists-p archive-file))))
+      (with-current-buffer (find-file-noselect archive-file)
+        (goto-char (point-min))
+        (should (re-search-forward "^\\* Test Heading.*:archived_clocks:" nil t))
+        ;; Should have ARCHIVE_FILE property
+        (should (re-search-forward ":ARCHIVE_FILE:" nil t))
+        (goto-char (point-min))
+        (should (re-search-forward "^CLOCK:" nil t))))))
+
+(ert-deftest org-autotask-clock-archive-old-no-drawer ()
+  "Test `org-autotask-clock-archive-old' when `org-clock-into-drawer' is nil."
+  (org-autotask-test--with-temp-archive
+      ((org-clock-into-drawer nil))
+    (let ((old-clock (org-autotask-test--make-old-clock-string 400)))
+      ;; Create source file with clock not in drawer
+      (with-temp-file temp-file
+        (insert "* Test Heading\n")
+        (insert old-clock "\n"))
+      ;; Archive old clocks
+      (with-current-buffer (find-file-noselect temp-file)
+        (let* ((org-archive-location (concat archive-file "::"))
+               (count (org-autotask-clock-archive-old 365)))
+          (should (= count 1))
+          ;; Source should have no clock
+          (goto-char (point-min))
+          (should-not (re-search-forward "^CLOCK:" nil t))
+          ;; Archive should have clock without drawer
+          (should (file-exists-p archive-file))))
+      (with-current-buffer (find-file-noselect archive-file)
+        (goto-char (point-min))
+        (should (re-search-forward "^\\* Test Heading.*:archived_clocks:" nil t))
+        (should (re-search-forward "^CLOCK:" nil t))
+        ;; No drawer
+        (goto-char (point-min))
+        (should-not (re-search-forward "^:LOGBOOK:" nil t))))))
+
+(ert-deftest org-autotask-clock-archive-old-custom-drawer ()
+  "Test `org-autotask-clock-archive-old' with custom drawer name."
+  (org-autotask-test--with-temp-archive
+      ((org-clock-into-drawer "CLOCKING"))
+    (let ((old-clock (org-autotask-test--make-old-clock-string 400)))
+      ;; Create source file with clock in custom drawer
+      (with-temp-file temp-file
+        (insert "* Test Heading\n")
+        (insert ":CLOCKING:\n")
+        (insert old-clock "\n")
+        (insert ":END:\n"))
+      ;; Archive old clocks
+      (with-current-buffer (find-file-noselect temp-file)
+        (let* ((org-archive-location (concat archive-file "::"))
+               (count (org-autotask-clock-archive-old 365)))
+          (should (= count 1))
+          ;; Source should have no clock and no drawer
+          (goto-char (point-min))
+          (should-not (re-search-forward "^CLOCK:" nil t))
+          (should-not (re-search-forward "^:CLOCKING:" nil t))
+          (should (file-exists-p archive-file))))
+      ;; Archive should have custom drawer
+      (with-current-buffer (find-file-noselect archive-file)
+        (goto-char (point-min))
+        (should (re-search-forward "^\\* Test Heading.*:archived_clocks:" nil t))
+        ;; Should have custom drawer, not LOGBOOK
+        (should (re-search-forward "^:CLOCKING:" nil t))
+        (should-not (search-forward ":LOGBOOK:" nil t))
+        (goto-char (point-min))
+        (should (re-search-forward "^CLOCK:" nil t))))))
+
+(ert-deftest org-autotask-clock-archive-old-multiple-headings ()
+  "Test `org-autotask-clock-archive-old' with multiple headings."
+  (org-autotask-test--with-temp-archive ()
+    (let ((old-clock1 (org-autotask-test--make-old-clock-string 400))
+          (old-clock2 (org-autotask-test--make-old-clock-string 500)))
+      ;; Create source file with clocks under different headings
+      (with-temp-file temp-file
+        (insert "* Heading One\n")
+        (insert ":LOGBOOK:\n")
+        (insert old-clock1 "\n")
+        (insert ":END:\n")
+        (insert "* Heading Two\n")
+        (insert ":LOGBOOK:\n")
+        (insert old-clock2 "\n")
+        (insert ":END:\n"))
+      ;; Archive old clocks
+      (with-current-buffer (find-file-noselect temp-file)
+        (let* ((org-archive-location (concat archive-file "::"))
+               (count (org-autotask-clock-archive-old 365)))
+          (should (= count 2))
+          ;; Source should have no clocks
+          (goto-char (point-min))
+          (should-not (re-search-forward "^CLOCK:" nil t))
+          (should (file-exists-p archive-file))))
+      ;; Archive should have both headings
+      (with-current-buffer (find-file-noselect archive-file)
+        (goto-char (point-min))
+        (should (re-search-forward "^\\* Heading One.*:archived_clocks:" nil t))
+        (goto-char (point-min))
+        (should (re-search-forward "^\\* Heading Two.*:archived_clocks:" nil t))))))
+
+(ert-deftest org-autotask-clock-archive-old-running-clock ()
+  "Test that `org-autotask-clock-archive-old' does not archive running clocks."
+  (org-autotask-test--with-temp-archive ()
+    ;; Create source file with a running clock (no end time)
+    (with-temp-file temp-file
+      (insert "* Test Heading\n")
+      (insert ":LOGBOOK:\n")
+      ;; Running clock has no end time
+      (insert "CLOCK: [2020-01-01 Wed 10:00]\n")
+      (insert ":END:\n"))
+    ;; Try to archive
+    (with-current-buffer (find-file-noselect temp-file)
+      (let* ((org-archive-location (concat archive-file "::"))
+             (count (org-autotask-clock-archive-old 365)))
+        (should (= count 0))
+        ;; Source should still have the clock
+        (goto-char (point-min))
+        (should (re-search-forward "^CLOCK:" nil t))
+        ;; No archive file created
+        (should-not (file-exists-p archive-file))))))
+
+(ert-deftest org-autotask-clock-archive-old-no-old-clocks ()
+  "Test `org-autotask-clock-archive-old' when there are no old clocks."
+  (org-autotask-test--with-temp-archive ()
+    (let ((recent-clock (org-autotask-test--make-old-clock-string 90)))
+      ;; Create source file with only recent clock
+      (with-temp-file temp-file
+        (insert "* Test Heading\n")
+        (insert ":LOGBOOK:\n")
+        (insert recent-clock "\n")
+        (insert ":END:\n"))
+      ;; Try to archive
+      (with-current-buffer (find-file-noselect temp-file)
+        (let* ((org-archive-location (concat archive-file "::"))
+               (count (org-autotask-clock-archive-old 365)))
+          (should (= count 0))
+          ;; Source should still have the clock
+          (goto-char (point-min))
+          (should (re-search-forward "^CLOCK:" nil t))
+          ;; No archive file created
+          (should-not (file-exists-p archive-file)))))))
+
+(ert-deftest org-autotask-clock-archive-old-old-and-recent ()
+  "Test `org-autotask-clock-archive-old' archives old clocks but preserves recent."
+  (org-autotask-test--with-temp-archive ()
+    ;; Create clock at 364 days (should not be archived with 365-day threshold)
+    ;; and one at 366 days (should be archived).  Using 364 instead of 365
+    ;; provides margin for time elapsed between test setup and execution.
+    (let ((before-threshold (org-autotask-test--make-old-clock-string 364))
+          (past-threshold (org-autotask-test--make-old-clock-string 366)))
+      (with-temp-file temp-file
+        (insert "* Test Heading\n")
+        (insert ":LOGBOOK:\n")
+        (insert before-threshold "\n")
+        (insert past-threshold "\n")
+        (insert ":END:\n"))
+      (with-current-buffer (find-file-noselect temp-file)
+        (let* ((org-archive-location (concat archive-file "::"))
+               (count (org-autotask-clock-archive-old 365)))
+          ;; Only the past-threshold clock should be archived
+          (should (= count 1))
+          ;; Source should still have before-threshold clock
+          (goto-char (point-min))
+          (should (re-search-forward "^CLOCK:" nil t))
+          (should-not (re-search-forward "^CLOCK:" nil t)))))))
+
+(ert-deftest org-autotask-clock-archive-old-nested-heading ()
+  "Test `org-autotask-clock-archive-old' preserves outline path."
+  (org-autotask-test--with-temp-archive ()
+    (let ((old-clock (org-autotask-test--make-old-clock-string 400)))
+      ;; Create source file with nested headings
+      (with-temp-file temp-file
+        (insert "* Project A\n")
+        (insert "** Task Group\n")
+        (insert "*** TODO Specific Task\n")
+        (insert ":LOGBOOK:\n")
+        (insert old-clock "\n")
+        (insert ":END:\n"))
+      (with-current-buffer (find-file-noselect temp-file)
+        (let* ((org-archive-location (concat archive-file "::"))
+               (count (org-autotask-clock-archive-old 365)))
+          (should (= count 1))
+          (should (file-exists-p archive-file))))
+      (with-current-buffer (find-file-noselect archive-file)
+        (goto-char (point-min))
+        ;; Heading should be just the leaf node
+        (should (re-search-forward "^\\* Specific Task.*:archived_clocks:" nil t))
+        ;; ARCHIVE_OLPATH should contain parent path
+        (should (re-search-forward ":ARCHIVE_OLPATH: Project A/Task Group" nil t))
+        ;; ARCHIVE_FILE should be present
+        (goto-char (point-min))
+        (should (re-search-forward ":ARCHIVE_FILE:" nil t))))))
+
+(ert-deftest org-autotask-clock-archive-old-not-in-org-mode ()
+  "Test `org-autotask-clock-archive-old' errors when not in Org mode."
+  (with-temp-buffer
+    (fundamental-mode)
+    (should-error (org-autotask-clock-archive-old) :type 'user-error)))
+
+(ert-deftest org-autotask-clock-archive-old-not-in-org-mode-no-prompt ()
+  "Test that interactive call checks mode before prompting for days.
+When called interactively with prefix arg from non-Org buffer, the
+function should error before prompting for the days threshold."
+  (with-temp-buffer
+    (fundamental-mode)
+    (let ((read-number-called nil))
+      (cl-letf (((symbol-function 'read-number)
+                 (lambda (&rest _)
+                   (setq read-number-called t)
+                   365)))
+        (let ((current-prefix-arg '(4)))
+          (should-error
+           (call-interactively 'org-autotask-clock-archive-old)
+           :type 'user-error))
+        (should-not read-number-called)))))
+
+(ert-deftest org-autotask-clock-archive-old-accumulates ()
+  "Test that repeated archiving accumulates clocks under one heading."
+  (org-autotask-test--with-temp-archive ()
+    (let ((old-clock1 (org-autotask-test--make-old-clock-string 400))
+          (old-clock2 (org-autotask-test--make-old-clock-string 500)))
+      (with-current-buffer (find-file-noselect temp-file)
+        (let ((org-archive-location (concat archive-file "::")))
+          ;; First archive: create heading with one clock
+          (insert "* Test Heading\n")
+          (insert ":LOGBOOK:\n")
+          (insert old-clock1 "\n")
+          (insert ":END:\n")
+          (save-buffer)
+          (org-autotask-clock-archive-old 365)
+          ;; Second archive: add another old clock and archive again
+          (erase-buffer)
+          (insert "* Test Heading\n")
+          (insert ":LOGBOOK:\n")
+          (insert old-clock2 "\n")
+          (insert ":END:\n")
+          (save-buffer)
+          (revert-buffer t t)
+          (org-autotask-clock-archive-old 365))))
+    ;; Verify archive has ONE heading with BOTH clocks
+    (with-current-buffer (find-file-noselect archive-file)
+      (revert-buffer t t)
+      (goto-char (point-min))
+      ;; Should have exactly one archived_clocks heading
+      (should (re-search-forward "^\\* Test Heading.*:archived_clocks:" nil t))
+      (should-not (re-search-forward "^\\* Test Heading.*:archived_clocks:" nil t))
+      ;; Should have exactly one LOGBOOK drawer with two CLOCK entries
+      (goto-char (point-min))
+      (should (re-search-forward "^:LOGBOOK:" nil t))
+      (should-not (re-search-forward "^:LOGBOOK:" nil t))
+      (goto-char (point-min))
+      (should (re-search-forward "^CLOCK:" nil t))
+      (should (re-search-forward "^CLOCK:" nil t))
+      (should-not (re-search-forward "^CLOCK:" nil t)))))
+
+(ert-deftest org-autotask-clock-archive-old-accumulates-respects-olpath ()
+  "Test that accumulation respects different outline paths."
+  (org-autotask-test--with-temp-archive ()
+    (let ((old-clock1 (org-autotask-test--make-old-clock-string 400))
+          (old-clock2 (org-autotask-test--make-old-clock-string 500)))
+      (with-current-buffer (find-file-noselect temp-file)
+        (let ((org-archive-location (concat archive-file "::")))
+          ;; Archive clock from "Project A / Task"
+          (insert "* Project A\n")
+          (insert "** Task\n")
+          (insert ":LOGBOOK:\n")
+          (insert old-clock1 "\n")
+          (insert ":END:\n")
+          (save-buffer)
+          (org-autotask-clock-archive-old 365)
+          ;; Archive clock from "Project B / Task" (same task name, different path)
+          (erase-buffer)
+          (insert "* Project B\n")
+          (insert "** Task\n")
+          (insert ":LOGBOOK:\n")
+          (insert old-clock2 "\n")
+          (insert ":END:\n")
+          (save-buffer)
+          (revert-buffer t t)
+          (org-autotask-clock-archive-old 365))))
+    ;; Verify archive has TWO separate headings (one for each olpath)
+    (with-current-buffer (find-file-noselect archive-file)
+      (revert-buffer t t)
+      (goto-char (point-min))
+      ;; Should have two separate "Task" headings
+      (should (re-search-forward "^\\* Task.*:archived_clocks:" nil t))
+      (should (re-search-forward "^\\* Task.*:archived_clocks:" nil t))
+      ;; Should have different ARCHIVE_OLPATH values
+      (goto-char (point-min))
+      (should (re-search-forward ":ARCHIVE_OLPATH: Project A" nil t))
+      (goto-char (point-min))
+      (should (re-search-forward ":ARCHIVE_OLPATH: Project B" nil t)))))
 
 (provide 'org-autotask-test)
 ;; Local variables:
