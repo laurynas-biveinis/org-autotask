@@ -382,7 +382,7 @@ configuration, with an optional fast state selection character."
 ;;;###autoload
 (defcustom org-autotask-keyword-done "DONE"
   "The TODO entry keyword that designates a completed task or project.
-It must be present in `org-todo-keyword', either directly or thorugh per-file
+It must be present in `org-todo-keyword', either directly or through per-file
 configuration, with an optional fast state selection character."
   :type '(string)
   :group 'org-autotask
