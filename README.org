@@ -91,31 +91,32 @@ lock you out of Emacs. To do this for your own commands, the above method still
 works, but it might be more convenient to call ~(org-autotask-require-org-clock)~
 from the command itself instead.
 
-** Archiving Old Clock Entries
+** Archiving Old Log Entries
 
-The command ~org-autotask-clock-archive-old~ archives CLOCK entries older than a
-configurable threshold from the current Org file to its standard archive file (as
-defined by ~org-archive-location~).
+The command ~org-autotask-log-archive-old~ archives CLOCK entries and state
+change entries older than a configurable threshold from the current Org file to
+its standard archive file (as defined by ~org-archive-location~).
 
 Usage:
-- ~M-x org-autotask-clock-archive-old~ - Archive clocks older than
-  ~org-autotask-clock-archive-default-days~ days (default: 365)
-- ~C-u M-x org-autotask-clock-archive-old~ - Prompt for the threshold in days
+- ~M-x org-autotask-log-archive-old~ - Archive log entries older than
+  ~org-autotask-log-archive-default-days~ days (default: 365)
+- ~C-u M-x org-autotask-log-archive-old~ - Prompt for the threshold in days
 
-Archived clocks are placed under headings tagged with ~:archived_clocks:~.  This
+Archived entries are placed under headings tagged with ~:archived_logs:~.  This
 tag is used instead of Org's standard ~:ARCHIVE:~ tag because we archive only
-clock entries, not entire tasks—the original task may still be active.  The
-~:archived_clocks:~ tag is purely organizational and does not affect clock
+log entries, not entire tasks—the original task may still be active.  The
+~:archived_logs:~ tag is purely organizational and does not affect clock
 reporting.  Following Org's archiving convention, each entry includes
 ~ARCHIVE_OLPATH~ and ~ARCHIVE_FILE~ properties to preserve context:
 
 #+BEGIN_SRC org
-,* Task Name :archived_clocks:
+,* Task Name :archived_logs:
 :PROPERTIES:
 :ARCHIVE_OLPATH: Project/Subproject
 :ARCHIVE_FILE: /path/to/source.org
 :END:
 :LOGBOOK:
+- State "DONE"       from "TODO"       [2023-01-15 Sun 08:30]
 CLOCK: [2023-01-15 Sun 09:00]--[2023-01-15 Sun 10:30] =>  1:30
 :END:
 #+END_SRC
