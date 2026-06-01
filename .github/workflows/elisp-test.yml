@@ -32,12 +32,12 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: actions/checkout@v6 # zizmor: ignore[unpinned-uses]
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
       - name: Set up Emacs
-        uses: purcell/setup-emacs@master # zizmor: ignore[unpinned-uses]
+        uses: purcell/setup-emacs@master
         with:
           version: ${{ matrix.emacs_version }}
 
@@ -70,7 +70,7 @@ jobs:
                 -f ert-run-tests-batch-and-exit
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4 # zizmor: ignore[unpinned-uses]
+        uses: actions/upload-artifact@v4
         if: matrix.emacs_version != '27.2' && matrix.emacs_version != '28.2'
         with:
           name: test-results-emacs-${{ matrix.emacs_version }}
@@ -78,7 +78,7 @@ jobs:
           retention-days: 7
 
       - name: Test Report
-        uses: dorny/test-reporter@v3 # zizmor: ignore[unpinned-uses]
+        uses: dorny/test-reporter@v3
         if: matrix.emacs_version != '27.2' && matrix.emacs_version != '28.2'
         with:
           name: Test Results - Emacs ${{ matrix.emacs_version }}
