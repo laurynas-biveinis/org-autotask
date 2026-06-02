@@ -8,9 +8,6 @@ online.
 
 User-facing documentation is in README.org.
 
-This is an Elisp project, and should follow user's Elisp guidelines at
-@~/.claude/CLAUDE-elisp.md.
-
 ## Build/Test Commands
 
 - Run all tests: `make test` or:
