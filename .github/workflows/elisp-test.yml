@@ -11,17 +11,20 @@ permissions: {}
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, macos-latest]
         emacs_version:
           - "snapshot"
           - "release-snapshot"
           - "30.1"
           - "29.4"
           - "28.2"
-          - "27.2"
+        include:
+          - os: ubuntu-latest
+            emacs_version: "27.2"
 
     permissions:
       contents: read
@@ -64,14 +67,14 @@ jobs:
       # org-lint is effectively version-independent, so run it once rather than
       # across the whole matrix.
       - name: Lint README.org
-        if: matrix.emacs_version == 'snapshot'
+        if: matrix.os == 'ubuntu-latest' && matrix.emacs_version == 'snapshot'
         run: eask run script org-lint
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: matrix.emacs_version != '27.2' && matrix.emacs_version != '28.2'
         with:
-          name: test-results-emacs-${{ matrix.emacs_version }}
+          name: test-results-${{ matrix.os }}-emacs-${{ matrix.emacs_version }}
           path: org-autotask-test.xml
           retention-days: 7
 
@@ -79,6 +82,6 @@ jobs:
         uses: dorny/test-reporter@v3
         if: matrix.emacs_version != '27.2' && matrix.emacs_version != '28.2'
         with:
-          name: Test Results - Emacs ${{ matrix.emacs_version }}
+          name: Test Results - ${{ matrix.os }} - Emacs ${{ matrix.emacs_version }}
           path: org-autotask-test.xml
           reporter: java-junit

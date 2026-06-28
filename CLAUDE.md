@@ -13,8 +13,8 @@ User-facing documentation is in README.org.
 The project uses [Eask](https://emacs-eask.github.io/) as its build tool.
 
 - Run the full local check pipeline (Elisp syntax, elisp-autofmt, elisp-lint,
-  keywords/regexps lint, ERT tests, org-lint, plus shell/Markdown/YAML):
-  `./check.sh`
+  keyword and regular-expression lints, ERT tests, org-lint, plus
+  shell/Markdown/YAML): `./check.sh`
 
 - Run all tests: `eask run script test` (equivalently
   `eask test ert org-autotask-test.el`)
