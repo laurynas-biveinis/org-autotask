@@ -10,21 +10,23 @@ User-facing documentation is in README.org.
 
 ## Build/Test Commands
 
-- Run all tests: `make test` or:
+The project uses [Eask](https://emacs-eask.github.io/) as its build tool.
 
-  ```bash
-  emacs -batch -l ert -l org-autotask.el -l org-autotask-test.el \
-        -f ert-run-tests-batch-and-exit
-  ```
+- Run the full local check pipeline (Elisp syntax, elisp-autofmt, elisp-lint,
+  keywords/regexps lint, ERT tests, org-lint, plus shell/Markdown/YAML):
+  `./check.sh`
+
+- Run all tests: `eask run script test` (equivalently
+  `eask test ert org-autotask-test.el`)
 
 - Run a single test:
 
   ```bash
   emacs -batch -l ert -l org-autotask.el -l org-autotask-test.el \
-        --eval "(ert-run-test-interactively 'test-name-here)"
+        --eval "(ert-run-tests-batch-and-exit 'test-name-here)"
   ```
 
-- Byte-compile: `emacs -batch -f batch-byte-compile org-autotask.el`
+- Byte-compile: `eask compile`
 
 ## Code Style Guidelines
 

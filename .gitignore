@@ -1,1 +1,7 @@
 *.elc
+*-autoloads.el
+*-pkg.el
+
+# Eask
+.eask/
+dist/

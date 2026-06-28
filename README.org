@@ -142,41 +142,41 @@ This is useful for quickly accessing resources without starting time tracking.
 We recommend binding it to a convenient key, for example ~C-c C-x C-u~.
 
 #+BEGIN_SRC org
-* TODO Do something at example.com                                          :@online:
+,* TODO Do something at example.com                                          :@online:
 :PROPERTIES:
 :URL: https://example.com
 :END:
 
-* TODO Do something at two websites                                         :@online:
+,* TODO Do something at two websites                                         :@online:
 :PROPERTIES:
 :URL: https://1.example.com
 :URL+: https://2.example.com
 :END:
 
-* TODO Play macOS chess                                                       :@home:
+,* TODO Play macOS chess                                                       :@home:
 :PROPERTIES:
 :APP: Chess.app
 :END:
 
-* TODO Lock screen and do something away from the computer :@home:
+,* TODO Lock screen and do something away from the computer :@home:
 :PROPERTIES:
 :SHELL: pmset displaysleepnow
 :END:
 
-* TODO Work on a certain file in Emacs                                      :@office:
+,* TODO Work on a certain file in Emacs                                      :@office:
 :PROPERTIES:
 :VISIT: /path/to/file
 :END:
 
-* TODO Work on something that is called by Elisp                            :@office:
+,* TODO Work on something that is called by Elisp                            :@office:
 :PROPERTIES:
 :EVAL: (my-work)
 :END:
 
-* TODO Combine two actions                                                  :@office:
+,* TODO Combine two actions                                                  :@office:
 :PROPERTIES:
 :URL: https://example.com
-:VISIT: /peth/to/file
+:VISIT: /path/to/file
 :END:
 #+END_SRC
 

@@ -42,33 +42,30 @@ jobs:
         with:
           version: ${{ matrix.emacs_version }}
 
-      - name: Install dependencies
-        run: |
-          emacs -Q --batch \
-                --eval "(require 'package)" \
-                --eval "(add-to-list 'package-archives '(\"melpa\" . \"https://melpa.org/packages/\") t)" \
-                --eval "(package-initialize)" \
-                --eval "(package-refresh-contents)" \
-                --eval "(unless (package-installed-p 'elisp-lint) (package-install 'elisp-lint))" \
-                --eval "(unless (package-installed-p 'package-lint) (package-install 'package-lint))"
-
-      - name: elisp-lint
-        run: |
-          emacs -Q --batch \
-                --eval "(package-initialize)" \
-                --eval "(require 'elisp-lint)" \
-                -f elisp-lint-files-batch ./*.el
+      - name: Set up Eask
+        uses: emacs-eask/setup-eask@master
+        with:
+          version: "snapshot"
 
       - name: Run tests
         env:
           EMACS_TEST_JUNIT_REPORT: ${{ (matrix.emacs_version != '27.2' && matrix.emacs_version != '28.2') && 'org-autotask-test.xml' || '' }}
         run: |
-          emacs -Q --batch \
-                --eval "(package-initialize)" \
-                --eval "(add-to-list 'load-path (expand-file-name \".\"))" \
-                --eval "(require 'ert)" \
-                -l org-autotask.el -l org-autotask-test.el \
-                -f ert-run-tests-batch-and-exit
+          eask clean all
+          eask package
+          eask install
+          eask compile
+          eask lint elisp-lint
+          eask lint elisp-lint org-autotask-test.el
+          eask lint keywords
+          eask lint regexps
+          eask run script test
+
+      # org-lint is effectively version-independent, so run it once rather than
+      # across the whole matrix.
+      - name: Lint README.org
+        if: matrix.emacs_version == 'snapshot'
+        run: eask run script org-lint
 
       - name: Upload test results
         uses: actions/upload-artifact@v4

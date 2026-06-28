@@ -294,15 +294,21 @@
 
 ;; The GTD list structure, used for contexts, projects, and someday/maybe items.
 ;;;###autoload
-(cl-defstruct (org-autotask-list)
-  "A single GTD list, which could be for a context, projects, and someday/maybe
+(cl-defstruct
+ (org-autotask-list)
+ "A single GTD list, which could be for a context, projects, and someday/maybe
 items."
-  (tag "" :type string :read-only t :documentation "The `org' tag.")
-  (select-char
-   ? :type character :read-only t
-   :documentation "The `org' quick selection character for the tag.")
-  (description "" :type string :read-only t
-               :documentation "The description string for this list."))
+ (tag "" :type string :read-only t :documentation "The `org' tag.")
+ (select-char
+  ?\s
+  :type character
+  :read-only t
+  :documentation "The `org' quick selection character for the tag.")
+ (description
+  ""
+  :type string
+  :read-only t
+  :documentation "The description string for this list."))
 
 ;;;###autoload
 (defun org-autotask-list-not-tag (gtd-list)
@@ -324,46 +330,65 @@ items."
 The tags and the selection keys will be added to as a single group to
 `org-tag-alist', together with (`org-autotask-waitingfor-tag' .
 `org-autotask-waitingfor-select') by `org-autotask-initialize'."
-  :type '(repeat (struct :tag "Context"
-                         (string :tag "`org' Tag")
-                         (character :tag "Quick selection character")
-                         (string :tag "Description")))
+  :type
+  '(repeat
+    (struct
+     :tag
+     "Context"
+     (string :tag "`org' Tag")
+     (character :tag "Quick selection character")
+     (string :tag "Description")))
   :group 'org-autotask
   :package-version '(org-autotask . "0.1"))
 
 ;;;###autoload
 (defcustom org-autotask-waitingfor
-  (make-org-autotask-list :tag "@waitingfor" :select-char ?w
-                          :description "Waiting-for items")
+  (make-org-autotask-list
+   :tag "@waitingfor"
+   :select-char ?w
+   :description "Waiting-for items")
   "The GTD waiting-for context."
-  :type '(struct :tag "GTD waiting-for context"
-                 (string :tag "`org Tag")
-                 (character :tag "Quick selection character")
-                 (string :tag "Description"))
+  :type
+  '(struct
+    :tag
+    "GTD waiting-for context"
+    (string :tag "`org Tag")
+    (character :tag "Quick selection character")
+    (string :tag "Description"))
   :group 'org-autotask
   :package-version '(org-autotask . "0.1"))
 
 ;;;###autoload
 (defcustom org-autotask-projects
-  (make-org-autotask-list :tag "project" :select-char ?p
-                          :description "Projects")
+  (make-org-autotask-list
+   :tag "project"
+   :select-char ?p
+   :description "Projects")
   "The GTD project list."
-  :type '(struct :tag "Project list."
-                 (string :tag "`org Tag")
-                 (character :tag "Quick selection character")
-                 (string :tag "Description"))
+  :type
+  '(struct
+    :tag
+    "Project list."
+    (string :tag "`org Tag")
+    (character :tag "Quick selection character")
+    (string :tag "Description"))
   :group 'org-autotask
   :package-version '(org-autotask . "0.1"))
 
 ;;;###autoload
 (defcustom org-autotask-somedaymaybes
-  (make-org-autotask-list :tag "somedaymaybe" :select-char ?m
-                          :description "Someday/maybe")
+  (make-org-autotask-list
+   :tag "somedaymaybe"
+   :select-char ?m
+   :description "Someday/maybe")
   "The GTD someday/maybe list."
-  :type '(struct :tag "Someday/maybe item list."
-                 (string :tag "`org Tag")
-                 (character :tag "Quick selection character")
-                 (string :tag "Description"))
+  :type
+  '(struct
+    :tag
+    "Someday/maybe item list."
+    (string :tag "`org Tag")
+    (character :tag "Quick selection character")
+    (string :tag "Description"))
   :group 'org-autotask
   :package-version '(org-autotask . "0.1"))
 
@@ -431,11 +456,16 @@ Each entry is a plist with `:property', `:action', and optionally `:multi' keys.
 `:action' is the function to call with the property value.
 `:multi', if non-nil, indicates that multiple values are allowed for the
 property."
-  :type '(repeat (plist :options
-                        ((:property (string :tag "Org node property"))
-                         (:action (function :tag "Action function"))
-                         (:multi (choice (const :tag "Single value" nil)
-                                         (const :tag "Multiple values" t))))))
+  :type
+  '(repeat
+    (plist
+     :options
+     ((:property (string :tag "Org node property"))
+      (:action (function :tag "Action function"))
+      (:multi
+       (choice
+        (const :tag "Single value" nil)
+        (const :tag "Multiple values" t))))))
   :group 'org-autotask
   :package-version '(org-autotask . "0.1"))
 
@@ -465,9 +495,10 @@ property."
     (let* ((property (plist-get action :property))
            (func (plist-get action :action))
            (multi (plist-get action :multi))
-           (values (if multi
-                       (org-entry-get-multivalued-property (point) property)
-                     (list (org-entry-get (point) property)))))
+           (values
+            (if multi
+                (org-entry-get-multivalued-property (point) property)
+              (list (org-entry-get (point) property)))))
       (dolist (value values)
         (when value
           (funcall func value))))))
@@ -491,7 +522,8 @@ allows manual URL opening for quick reference without starting time tracking."
     (user-error "Not in an Org buffer"))
   (save-excursion
     (org-back-to-heading t)
-    (if-let* ((urls (org-entry-get-multivalued-property (point) "URL")))
+    (if-let* ((urls
+               (org-entry-get-multivalued-property (point) "URL")))
         (dolist (url urls)
           (browse-url url))
       (message "No URL property found for this entry"))))
@@ -501,26 +533,32 @@ allows manual URL opening for quick reference without starting time tracking."
 (defun org-autotask--org-headline-has-url (headline url)
   "Return the HEADLINE if it has the URL property with the given value."
   (let ((url-property-value (org-element-property :URL headline)))
-    (and url-property-value (string= url url-property-value)
+    (and url-property-value
+         (string= url url-property-value)
          headline)))
 
 (defun org-autotask--find-org-node-with-url-property-in-buffer (url)
   "Find an Org node with a given URL property value in the current buffer."
-  (org-element-map (org-element-parse-buffer) 'headline
-    (lambda (headline)
-      (org-autotask--org-headline-has-url headline url)) nil t))
+  (org-element-map
+   (org-element-parse-buffer) 'headline
+   (lambda (headline)
+     (org-autotask--org-headline-has-url headline url))
+   nil t))
 
 (defun org-autotask--find-org-node-with-url-property (url)
   "Find the Org node with a given URL property value in Org agenda files."
   (let ((files (org-agenda-files))
         (found nil))
     (while (and files (not found))
-      (let* ((file (pop files))
-             (buffer (or (find-buffer-visiting file)
-                         (find-file-noselect file t)))
-             (node (with-current-buffer buffer
-                     (org-autotask--find-org-node-with-url-property-in-buffer
-                      url))))
+      (let*
+          ((file (pop files))
+           (buffer
+            (or (find-buffer-visiting file)
+                (find-file-noselect file t)))
+           (node
+            (with-current-buffer buffer
+              (org-autotask--find-org-node-with-url-property-in-buffer
+               url))))
         (when node
           (setq found (list :buffer buffer :headline node)))))
     found))
@@ -529,7 +567,8 @@ allows manual URL opening for quick reference without starting time tracking."
 (defmacro org-autotask-with-org-node-with-url (url &rest body)
   "Go to the `org' node with the URL property value, execute the forms of BODY."
   (declare (indent 1) (debug t))
-  `(let ((org-info (org-autotask--find-org-node-with-url-property ,url)))
+  `(let ((org-info
+          (org-autotask--find-org-node-with-url-property ,url)))
      (when (not org-info)
        (user-error "URL %s not found in `org-agenda-files'" ,url))
      (let* ((org-buffer (plist-get org-info :buffer))
@@ -546,22 +585,24 @@ allows manual URL opening for quick reference without starting time tracking."
   (org-autotask-with-org-node-with-url url
     (goto-char headline-pos)
     (org-clock-in)
-    (message "Clocking-in the `org' node with %s, use C-c & to go back" url)))
+    (message
+     "Clocking-in the `org' node with %s, use C-c & to go back"
+     url)))
 
 ;;;###autoload
 (defmacro org-autotask-with-different-org-clock (&rest body)
   "Save the current org clock, clock-in, execute the forms of BODY.
 The marker must be at the new clock position."
   (declare (indent defun) (debug t))
-  `(let ((current-clock-marker (when (org-clocking-p)
-                                 (copy-marker org-clock-marker))))
+  `(let ((current-clock-marker
+          (when (org-clocking-p)
+            (copy-marker org-clock-marker))))
      (unwind-protect
          (progn
            (org-clock-in)
            ,@body)
        (if current-clock-marker
-           (org-with-point-at current-clock-marker
-             (org-clock-in))
+           (org-with-point-at current-clock-marker (org-clock-in))
          (org-clock-out)))))
 
 ;; `org' setup
@@ -569,18 +610,22 @@ The marker must be at the new clock position."
   "Check that KEYWORD in present in `org-todo-keywords'."
   (unless (seq-some
            (lambda (todo-sequence)
-             (seq-some (lambda (keyword-and-char)
-                         (when (stringp keyword-and-char)
-                           (string= (car (split-string keyword-and-char "("))
-                                    keyword)))
-                       todo-sequence))
+             (seq-some
+              (lambda (keyword-and-char)
+                (when (stringp keyword-and-char)
+                  (string=
+                   (car (split-string keyword-and-char "("))
+                   keyword)))
+              todo-sequence))
            org-todo-keywords)
-    (user-error "'%s' must be present in `org-todo-keywords'" keyword)))
+    (user-error "'%s' must be present in `org-todo-keywords'"
+                keyword)))
 
 (defun org-autotask--make-org-alist-cons-cell (gtd-list)
   "Convert a GTD-LIST to a cons cell for `org-tag-alist'."
-  (cons (org-autotask-list-tag gtd-list)
-        (org-autotask-list-select-char gtd-list)))
+  (cons
+   (org-autotask-list-tag gtd-list)
+   (org-autotask-list-select-char gtd-list)))
 
 (defun org-autotask--require-org-clock (&rest _args)
   "Block the command if no `org' task is clocked in."
@@ -611,7 +656,8 @@ inconsistencies."
   ;; Validate config
   (org-autotask--check-keyword-in-org-todo-keywords
    org-autotask-keyword-next-action)
-  (org-autotask--check-keyword-in-org-todo-keywords org-autotask-keyword-done)
+  (org-autotask--check-keyword-in-org-todo-keywords
+   org-autotask-keyword-done)
   (org-autotask--check-keyword-in-org-todo-keywords
    org-autotask-keyword-cancelled)
   ;; Configure `org'
@@ -621,40 +667,53 @@ inconsistencies."
      ((eq org-use-tag-inheritance t)
       nil)
      ((stringp org-use-tag-inheritance)
-      (unless (string-match-p org-use-tag-inheritance somedaymaybe-tag)
+      (unless (string-match-p
+               org-use-tag-inheritance somedaymaybe-tag)
         (user-error "`%s' tag %s does not match `%s' regex %s"
-                    "org-autotask-somedaymaybes" "org-use-tag-inheritance"
-                    somedaymaybe-tag org-use-tag-inheritance)))
+                    "org-autotask-somedaymaybes"
+                    "org-use-tag-inheritance"
+                    somedaymaybe-tag
+                    org-use-tag-inheritance)))
      ((listp org-use-tag-inheritance)
       (when (member somedaymaybe-tag org-use-tag-inheritance)
         (user-error "`%s' tag %s already in `%s' %S"
-                    "org-autotask-somedaymaybes" "org-use-tag-inheritance"
-                    somedaymaybe-tag org-use-tag-inheritance))
+                    "org-autotask-somedaymaybes"
+                    "org-use-tag-inheritance"
+                    somedaymaybe-tag
+                    org-use-tag-inheritance))
       (push somedaymaybe-tag org-use-tag-inheritance))
-     (t (user-error "Don't know how handle `org-use-tag-inheritance' value %S"
-                    org-use-tag-inheritance))))
+     (t
+      (user-error
+       "Don't know how handle `org-use-tag-inheritance' value %S"
+       org-use-tag-inheritance))))
   (setq org-todo-repeat-to-state org-autotask-keyword-next-action)
   (setq org-enforce-todo-dependencies t)
   (setq org-tag-alist
-        (append (list (cons :startgroup nil))
-                (mapcar #'org-autotask--make-org-alist-cons-cell
-                        (append org-autotask-contexts
-                                (list org-autotask-waitingfor)))
-                (list (cons :endgroup nil))
-                (list (org-autotask--make-org-alist-cons-cell
-                       org-autotask-projects))
-                (list (org-autotask--make-org-alist-cons-cell
-                       org-autotask-somedaymaybes))
-                org-tag-alist))
-  (setq org-stuck-projects `(,(concat "+" (org-autotask-list-tag
-                                           org-autotask-projects)
-                                      (org-autotask-list-not-tag
-                                       org-autotask-somedaymaybes) "/!"
-                                      org-autotask-keyword-next-action)
-                             (,org-autotask-keyword-next-action) nil ""))
+        (append
+         (list (cons :startgroup nil))
+         (mapcar
+          #'org-autotask--make-org-alist-cons-cell
+          (append
+           org-autotask-contexts (list org-autotask-waitingfor)))
+         (list (cons :endgroup nil))
+         (list
+          (org-autotask--make-org-alist-cons-cell
+           org-autotask-projects))
+         (list
+          (org-autotask--make-org-alist-cons-cell
+           org-autotask-somedaymaybes))
+         org-tag-alist))
+  (setq org-stuck-projects
+        `(,(concat
+            "+" (org-autotask-list-tag org-autotask-projects)
+            (org-autotask-list-not-tag
+             org-autotask-somedaymaybes)
+            "/!" org-autotask-keyword-next-action)
+          (,org-autotask-keyword-next-action) nil ""))
   (add-hook 'org-clock-in-hook #'org-autotask--clock-in-actions)
   ;; Configure `org-gcal'
-  (setq org-gcal-cancelled-todo-keyword org-autotask-keyword-cancelled)
+  (setq org-gcal-cancelled-todo-keyword
+        org-autotask-keyword-cancelled)
   ;; Set up clock gating for commands
   (dolist (cmd org-autotask-clock-gated-commands)
     (advice-add cmd :before #'org-autotask--require-org-clock)))
@@ -664,23 +723,30 @@ inconsistencies."
   "Return an `org' search string for next actions in GTD-LISTS."
   (let ((not-somedaymaybe
          (org-autotask-list-not-tag org-autotask-somedaymaybes)))
-    (concat (mapconcat (lambda (gtd-list)
-                         (concat (org-autotask-list-tag gtd-list)
-                                 not-somedaymaybe))
-                       gtd-lists "|")
-            "/!" org-autotask-keyword-next-action)))
+    (concat
+     (mapconcat (lambda (gtd-list)
+                  (concat
+                   (org-autotask-list-tag gtd-list) not-somedaymaybe))
+                gtd-lists
+                "|")
+     "/!" org-autotask-keyword-next-action)))
 
 ;;;###autoload
 (defun org-autotask-agenda-block (gtd-lists &optional header)
   "Return a `tags-todo' block for GTD-LISTS with optional HEADER.
 GTD-LISTS can be a single GTD list or their sequence.  If HEADER is not
 provided, take it from the description of the only list."
-  (let* ((single-gtd-list-p (and (not (sequencep gtd-lists))
-                                 (org-autotask-list-p gtd-lists)))
-         (gtd-lists-list (if single-gtd-list-p (list gtd-lists) gtd-lists))
-         (header-string (or header
-                            (and single-gtd-list-p
-                                 (org-autotask-list-description gtd-lists)))))
+  (let* ((single-gtd-list-p
+          (and (not (sequencep gtd-lists))
+               (org-autotask-list-p gtd-lists)))
+         (gtd-lists-list
+          (if single-gtd-list-p
+              (list gtd-lists)
+            gtd-lists))
+         (header-string
+          (or header
+              (and single-gtd-list-p
+                   (org-autotask-list-description gtd-lists)))))
     `(tags-todo
       ,(apply #'org-autotask--active-todo-search gtd-lists-list)
       ((org-agenda-overriding-header ,header-string)
@@ -690,53 +756,67 @@ provided, take it from the description of the only list."
 (defun org-autotask-agenda (gtd-list)
   "Return an `org-agenda' command part to show active items from GTD-LIST.
 TODO(laurynas) example (also to README)."
-  (list (org-autotask-list-description gtd-list) 'tags-todo
-        (org-autotask--active-todo-search gtd-list)))
+  (list
+   (org-autotask-list-description gtd-list)
+   'tags-todo
+   (org-autotask--active-todo-search gtd-list)))
 
 ;;;###autoload
 (defun org-autotask-agenda-somedaymaybe ()
   "Return an `org-agenda' command part to show someday/maybe items.
 TODO(laurynas) explanation for LEVEL=2."
-  (list (org-autotask-list-description org-autotask-somedaymaybes)
-        'tags-todo
-        (concat (org-autotask-list-tag org-autotask-somedaymaybes) "+LEVEL=2")
-        '((org-agenda-dim-blocked-tasks nil))))
+  (list
+   (org-autotask-list-description org-autotask-somedaymaybes)
+   'tags-todo
+   (concat
+    (org-autotask-list-tag org-autotask-somedaymaybes) "+LEVEL=2")
+   '((org-agenda-dim-blocked-tasks nil))))
 
 ;;;###autoload
 (defun org-autotask-agenda-active-non-project-tasks ()
   "Return an `org-agenda' command part to show active non-project next actions."
-  (list "Non-project next actions"
-        'tags-todo
-        (concat (org-autotask-list-not-tag org-autotask-projects)
-                (org-autotask-list-not-tag org-autotask-waitingfor)
-                (org-autotask-list-not-tag org-autotask-somedaymaybes)
-                "/!" org-autotask-keyword-next-action)
-        `((org-use-tag-inheritance
-           '(,(org-autotask-list-tag org-autotask-projects)
-             ,(org-autotask-list-tag org-autotask-somedaymaybes))))))
+  (list
+   "Non-project next actions" 'tags-todo
+   (concat
+    (org-autotask-list-not-tag org-autotask-projects)
+    (org-autotask-list-not-tag org-autotask-waitingfor)
+    (org-autotask-list-not-tag org-autotask-somedaymaybes)
+    "/!"
+    org-autotask-keyword-next-action)
+   `((org-use-tag-inheritance
+      '(,(org-autotask-list-tag org-autotask-projects)
+        ,(org-autotask-list-tag org-autotask-somedaymaybes))))))
 
 ;;;###autoload
 (defun org-autotask-agenda-archivable-tasks ()
   "Return an `org-agenda' command part to show archivable non-project tasks."
-  (list 'tags
-        (concat (org-autotask-list-not-tag org-autotask-projects) "/+"
-                org-autotask-keyword-done "|+" org-autotask-keyword-cancelled)
-        `((org-agenda-overriding-header "Archivable tasks")
-          (org-use-tag-inheritance '(,(org-autotask-list-tag
-                                       org-autotask-projects))))))
+  (list
+   'tags
+   (concat
+    (org-autotask-list-not-tag org-autotask-projects)
+    "/+"
+    org-autotask-keyword-done
+    "|+"
+    org-autotask-keyword-cancelled)
+   `((org-agenda-overriding-header "Archivable tasks")
+     (org-use-tag-inheritance
+      '(,(org-autotask-list-tag org-autotask-projects))))))
 
 ;;;###autoload
 (defun org-autotask-agenda-contextless-tasks ()
   "Return an `org-agenda' command part to show listless tasks."
-  (list 'todo
-        (concat
-         (apply #'concat (mapcar (lambda (context)
-                                   (org-autotask-list-not-tag context))
-                                 org-autotask-contexts))
-         (org-autotask-list-not-tag org-autotask-waitingfor)
-         (org-autotask-list-not-tag org-autotask-projects)
-         (org-autotask-list-not-tag org-autotask-somedaymaybes))
-        '((org-agenda-overriding-header "Contextless tasks"))))
+  (list
+   'todo
+   (concat
+    (apply #'concat
+           (mapcar
+            (lambda (context)
+              (org-autotask-list-not-tag context))
+            org-autotask-contexts))
+    (org-autotask-list-not-tag org-autotask-waitingfor)
+    (org-autotask-list-not-tag org-autotask-projects)
+    (org-autotask-list-not-tag org-autotask-somedaymaybes))
+   '((org-agenda-overriding-header "Contextless tasks"))))
 
 ;; Creating new tasks and completing them
 (defun org-autotask--insert-item (title keyword tag)
@@ -752,15 +832,19 @@ The heading must be already created."
 (defun org-autotask-insert-project (title)
   "Insert a new project task with TITLE at point.
 The heading must be already created."
-  (org-autotask--insert-item title org-autotask-keyword-next-action
-                             (org-autotask-list-tag org-autotask-projects)))
+  (org-autotask--insert-item
+   title
+   org-autotask-keyword-next-action
+   (org-autotask-list-tag org-autotask-projects)))
 
 ;;;###autoload
 (defun org-autotask-insert-waiting-for-next-action (title)
   "Insert a new next action waiting-for task with TITLE at point.
 The heading must be already created."
-  (org-autotask--insert-item title org-autotask-keyword-next-action
-                             (org-autotask-list-tag org-autotask-waitingfor)))
+  (org-autotask--insert-item
+   title
+   org-autotask-keyword-next-action
+   (org-autotask-list-tag org-autotask-waitingfor)))
 
 ;;;###autoload
 (defun org-autotask-complete-item ()
@@ -790,23 +874,27 @@ The day-of-week pattern follows `org-ts-regexp0' for locale independence.")
 (defun org-autotask--parse-state-change-timestamp (timestamp-string)
   "Parse TIMESTAMP-STRING from state change entry and return Emacs time.
 TIMESTAMP-STRING should be like \"[2023-01-15 Sun 18:24]\"."
-  (when (and timestamp-string
-             (string-match
-              "\\[\\([0-9]\\{4\\}\\)-\\([0-9]\\{2\\}\\)-\\([0-9]\\{2\\}\\)"
-              timestamp-string))
+  (when
+      (and
+       timestamp-string
+       (string-match
+        "\\[\\([0-9]\\{4\\}\\)-\\([0-9]\\{2\\}\\)-\\([0-9]\\{2\\}\\)"
+        timestamp-string))
     (let ((year (string-to-number (match-string 1 timestamp-string)))
           (month (string-to-number (match-string 2 timestamp-string)))
           (day (string-to-number (match-string 3 timestamp-string)))
           (hour 0)
           (minute 0))
-      (when (string-match "\\([0-9]\\{2\\}\\):\\([0-9]\\{2\\}\\)"
-                          timestamp-string)
-        (setq hour (string-to-number (match-string 1 timestamp-string)))
-        (setq minute (string-to-number (match-string 2 timestamp-string))))
+      (when (string-match
+             "\\([0-9]\\{2\\}\\):\\([0-9]\\{2\\}\\)" timestamp-string)
+        (setq hour
+              (string-to-number (match-string 1 timestamp-string)))
+        (setq minute
+              (string-to-number (match-string 2 timestamp-string))))
       (encode-time 0 minute hour day month year))))
 
-(defun org-autotask--add-log-entry-to-result (begin end text result heading
-                                                    olpath source-file)
+(defun org-autotask--add-log-entry-to-result
+    (begin end text result heading olpath source-file)
   "Add a log entry to RESULT hash table.
 BEGIN and END are buffer positions, TEXT is the entry text.
 HEADING and OLPATH identify the task, SOURCE-FILE is the file path."
@@ -814,16 +902,20 @@ HEADING and OLPATH identify the task, SOURCE-FILE is the file path."
          (entry-data (list :begin begin :end end :text text))
          (existing (gethash key result)))
     (if existing
-        (plist-put existing :entries
-                   (cons entry-data (plist-get existing :entries)))
-      (puthash key
-               (list :heading heading
-                     :olpath olpath
-                     :file source-file
-                     :entries (list entry-data))
-               result))))
+        (plist-put
+         existing
+         :entries (cons entry-data (plist-get existing :entries)))
+      (puthash
+       key
+       (list
+        :heading heading
+        :olpath olpath
+        :file source-file
+        :entries (list entry-data))
+       result))))
 
-(defun org-autotask--process-old-clock (clock threshold-time result source-file)
+(defun org-autotask--process-old-clock
+    (clock threshold-time result source-file)
   "Process CLOCK element if it's old enough to archive.
 THRESHOLD-TIME is the cutoff time.  Old clocks are added to RESULT hash table
 which stores entries in final result format, keyed by (heading . olpath).
@@ -838,14 +930,21 @@ SOURCE-FILE is the file path to record in entries."
              (olpath (org-get-outline-path))
              (clock-begin (org-element-property :begin clock))
              (clock-end (org-element-property :end clock))
-             (text (string-trim (buffer-substring-no-properties
-                                 clock-begin clock-end))))
-        (org-autotask--add-log-entry-to-result clock-begin clock-end text
-                                               result heading olpath
-                                               source-file)))))
+             (text
+              (string-trim
+               (buffer-substring-no-properties
+                clock-begin clock-end))))
+        (org-autotask--add-log-entry-to-result
+         clock-begin
+         clock-end
+         text
+         result
+         heading
+         olpath
+         source-file)))))
 
-(defun org-autotask--collect-old-state-changes (threshold-time result
-                                                               source-file)
+(defun org-autotask--collect-old-state-changes
+    (threshold-time result source-file)
   "Collect state change entries older than THRESHOLD-TIME into RESULT.
 RESULT is a hash table keyed by (heading . olpath).
 SOURCE-FILE is the file path to record in entries."
@@ -853,8 +952,9 @@ SOURCE-FILE is the file path to record in entries."
     (goto-char (point-min))
     (while (re-search-forward org-autotask--state-change-regexp nil t)
       (let* ((timestamp-str (match-string 3))
-             (state-time (org-autotask--parse-state-change-timestamp
-                          timestamp-str))
+             (state-time
+              (org-autotask--parse-state-change-timestamp
+               timestamp-str))
              (line-begin (line-beginning-position))
              (line-end (1+ (line-end-position))))
         (when (and state-time (time-less-p state-time threshold-time))
@@ -862,11 +962,18 @@ SOURCE-FILE is the file path to record in entries."
             (org-back-to-heading t)
             (let ((heading (org-get-heading t t t t))
                   (olpath (org-get-outline-path))
-                  (text (string-trim (buffer-substring-no-properties
-                                      line-begin (1- line-end)))))
-              (org-autotask--add-log-entry-to-result line-begin line-end text
-                                                     result heading olpath
-                                                     source-file))))))))
+                  (text
+                   (string-trim
+                    (buffer-substring-no-properties
+                     line-begin (1- line-end)))))
+              (org-autotask--add-log-entry-to-result
+               line-begin
+               line-end
+               text
+               result
+               heading
+               olpath
+               source-file))))))))
 
 (defun org-autotask--collect-old-log-entries (threshold-time)
   "Collect log entries in current buffer older than THRESHOLD-TIME.
@@ -876,12 +983,14 @@ The :entries value is a list of plists with :begin, :end, and :text."
   (let ((result (make-hash-table :test 'equal))
         (source-file (buffer-file-name)))
     ;; Collect old clocks
-    (org-element-map (org-element-parse-buffer) 'clock
-      (lambda (clock)
-        (org-autotask--process-old-clock
-         clock threshold-time result source-file)))
+    (org-element-map
+     (org-element-parse-buffer) 'clock
+     (lambda (clock)
+       (org-autotask--process-old-clock
+        clock threshold-time result source-file)))
     ;; Collect old state changes
-    (org-autotask--collect-old-state-changes threshold-time result source-file)
+    (org-autotask--collect-old-state-changes
+     threshold-time result source-file)
     (hash-table-values result)))
 
 (defun org-autotask--get-clock-drawer-name ()
@@ -895,14 +1004,20 @@ The :entries value is a list of plists with :begin, :end, and :text."
   "Format ENTRIES list for insertion into archive file.
 ENTRIES is a list of plists with :begin and :text properties.
 Entries are sorted by their original buffer position to preserve file order."
-  (let ((sorted (sort (copy-sequence entries)
-                      (lambda (a b)
-                        (< (plist-get a :begin) (plist-get b :begin))))))
+  (let ((sorted
+         (sort (copy-sequence entries)
+               (lambda (a b)
+                 (< (plist-get a :begin) (plist-get b :begin))))))
     (if-let* ((drawer-name (org-autotask--get-clock-drawer-name)))
-        (concat ":" drawer-name ":\n"
-                (mapconcat (lambda (e) (plist-get e :text)) sorted "\n")
-                "\n:END:\n")
-      (concat (mapconcat (lambda (e) (plist-get e :text)) sorted "\n") "\n"))))
+        (concat
+         ":"
+         drawer-name
+         ":\n"
+         (mapconcat (lambda (e) (plist-get e :text)) sorted "\n")
+         "\n:END:\n")
+      (concat
+       (mapconcat (lambda (e) (plist-get e :text)) sorted "\n")
+       "\n"))))
 
 (defun org-autotask--find-archive-heading (heading olpath)
   "Find existing archive heading matching HEADING and OLPATH.
@@ -912,12 +1027,13 @@ Matches headings with `archived_logs' tag and same ARCHIVE_OLPATH property."
     (goto-char (point-min))
     (let ((found nil))
       (while (and (not found)
-                  (re-search-forward
-                   (format "^\\* %s\\s-+:%s:"
-                           (regexp-quote heading)
-                           org-autotask-log-archive-tag)
-                   nil t))
-        (let ((entry-olpath (or (org-entry-get (point) "ARCHIVE_OLPATH") "")))
+                  (re-search-forward (format
+                                      "^\\* %s\\s-+:%s:"
+                                      (regexp-quote heading)
+                                      org-autotask-log-archive-tag)
+                                     nil t))
+        (let ((entry-olpath
+               (or (org-entry-get (point) "ARCHIVE_OLPATH") "")))
           (when (equal olpath entry-olpath)
             (setq found (line-beginning-position)))))
       found)))
@@ -927,10 +1043,13 @@ Matches headings with `archived_logs' tag and same ARCHIVE_OLPATH property."
 If a drawer exists, insert before :END:.  Otherwise insert at subtree end."
   (if-let* ((drawer-name (org-autotask--get-clock-drawer-name)))
       ;; Find existing drawer or insert new one
-      (let ((subtree-end (save-excursion (org-end-of-subtree t) (point))))
-        (if (re-search-forward
-             (format "^[ \t]*:%s:[ \t]*$" (regexp-quote drawer-name))
-             subtree-end t)
+      (let ((subtree-end
+             (save-excursion
+               (org-end-of-subtree t)
+               (point))))
+        (if (re-search-forward (format "^[ \t]*:%s:[ \t]*$"
+                                       (regexp-quote drawer-name))
+                               subtree-end t)
             ;; Found drawer - insert before :END:
             (progn
               (re-search-forward "^[ \t]*:END:[ \t]*$" subtree-end t)
@@ -956,7 +1075,8 @@ to it.  Otherwise creates a new entry."
          (olpath (string-join (plist-get entry :olpath) "/"))
          (source-file (plist-get entry :file))
          (entries (plist-get entry :entries))
-         (formatted (org-autotask--format-entries-for-archive entries))
+         (formatted
+          (org-autotask--format-entries-for-archive entries))
          (archive-buffer (find-file-noselect archive-file)))
     (with-current-buffer archive-buffer
       (unless (derived-mode-p 'org-mode)
@@ -966,12 +1086,15 @@ to it.  Otherwise creates a new entry."
           ;; Found existing entry - append entries
           (progn
             (goto-char existing-pos)
-            (org-autotask--insert-entries-at-end-of-subtree formatted))
+            (org-autotask--insert-entries-at-end-of-subtree
+             formatted))
         ;; No existing entry - create new one at end
         (goto-char (point-max))
-        (unless (bolp) (insert "\n"))
+        (unless (bolp)
+          (insert "\n"))
         ;; Create new heading with archive tag
-        (insert (format "* %s :%s:\n" heading org-autotask-log-archive-tag))
+        (insert
+         (format "* %s :%s:\n" heading org-autotask-log-archive-tag))
         ;; Add ARCHIVE_* properties like Org does
         (insert ":PROPERTIES:\n")
         (when (not (string-empty-p olpath))
@@ -990,11 +1113,13 @@ Deletes in reverse position order to preserve positions."
   (let ((all-positions nil))
     (dolist (entry entries)
       (dolist (log-entry (plist-get entry :entries))
-        (push (cons (plist-get log-entry :begin) (plist-get log-entry :end))
+        (push (cons
+               (plist-get log-entry :begin)
+               (plist-get log-entry :end))
               all-positions)))
     ;; Sort by begin position descending
-    (setq all-positions (sort all-positions
-                              (lambda (a b) (> (car a) (car b)))))
+    (setq all-positions
+          (sort all-positions (lambda (a b) (> (car a) (car b)))))
     ;; Delete each log entry
     (dolist (pos all-positions)
       (delete-region (car pos) (cdr pos)))))
@@ -1018,29 +1143,32 @@ Archives both CLOCK entries and state change entries.
 With \\[universal-argument], prompt for threshold days.
 Without prefix arg, uses `org-autotask-log-archive-default-days'.
 Returns the number of log entries archived."
-  (interactive
-   (progn
-     (unless (derived-mode-p 'org-mode)
-       (user-error "Not in an Org buffer"))
-     (list (if current-prefix-arg
-               (read-number "Archive log entries older than (days): "
-                            org-autotask-log-archive-default-days)
-             org-autotask-log-archive-default-days))))
+  (interactive (progn
+                 (unless (derived-mode-p 'org-mode)
+                   (user-error "Not in an Org buffer"))
+                 (list
+                  (if current-prefix-arg
+                      (read-number
+                       "Archive log entries older than (days): "
+                       org-autotask-log-archive-default-days)
+                    org-autotask-log-archive-default-days))))
   ;; Check for non-interactive calls
   (unless (derived-mode-p 'org-mode)
     (user-error "Not in an Org buffer"))
   (let* ((days (or days org-autotask-log-archive-default-days))
-         (threshold-time (time-subtract (current-time)
-                                        (seconds-to-time
-                                         (* days 24 60 60))))
-         (archive-file (car (org-archive--compute-location
-                             org-archive-location)))
-         (entries (org-autotask--collect-old-log-entries threshold-time))
+         (threshold-time
+          (time-subtract
+           (current-time) (seconds-to-time (* days 24 60 60))))
+         (archive-file
+          (car (org-archive--compute-location org-archive-location)))
+         (entries
+          (org-autotask--collect-old-log-entries threshold-time))
          (total-count 0))
     (when entries
       ;; First, archive log entries
       (dolist (entry entries)
-        (setq total-count (+ total-count (length (plist-get entry :entries))))
+        (setq total-count
+              (+ total-count (length (plist-get entry :entries))))
         (org-autotask--archive-entries entry archive-file))
       ;; Then delete from source
       (org-autotask--delete-entries entries)
