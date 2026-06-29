@@ -47,6 +47,10 @@
    :select-char ?d
    :description "Someday/maybe"))
 
+(defconst org-autotask--test-doit-keywords
+  '((sequence "DOIT(t!)" "|" "DONE(d!)" "CANCELLED(c!)"))
+  "An `org-todo-keywords' value whose next-action keyword is \"DOIT\".")
+
 (defun org-autotask--def-val (sym)
   "Get the default value for a `defcustom' SYM."
   (eval (car (get sym 'standard-value))))
@@ -298,23 +302,28 @@ EXPECTED is what `org-tag-alist' should be after initialization."
 
 ;; Test `org-autotask-agenda-block'
 
+(defmacro org-autotask--doit-agenda-fixture (varlist &rest body)
+  "Run BODY in a fixture configured for \"DOIT\" next actions.
+VARLIST adds bindings on top of the someday/maybe list, the \"DOIT\"
+next-action keyword and a matching `org-todo-keywords'."
+  (declare (indent 1) (debug t))
+  `(org-autotask--test-fixture ((org-autotask-somedaymaybes
+                                 org-autotask--test-somedaymaybe)
+                                (org-autotask-keyword-next-action
+                                 "DOIT")
+                                (org-todo-keywords
+                                 org-autotask--test-doit-keywords)
+                                ,@varlist)
+     ,@body))
+
 (ert-deftest org-autotask-agenda-block-one-list ()
   "Test for `org-autotask-agenda-block' with one list."
-  (org-autotask--test-fixture ((ctx-list
-                                (make-org-autotask-list
-                                 :tag "ctx"
-                                 :select-char ?c
-                                 :description "ctx description"))
-                               (org-autotask-somedaymaybes
-                                org-autotask--test-somedaymaybe)
-                               (org-autotask-keyword-next-action
-                                "DOIT")
-                               (org-todo-keywords
-                                '((sequence
-                                   "DOIT(t!)"
-                                   "|"
-                                   "DONE(d!)"
-                                   "CANCELLED(c!)"))))
+  (org-autotask--doit-agenda-fixture
+      ((ctx-list
+        (make-org-autotask-list
+         :tag "ctx"
+         :select-char ?c
+         :description "ctx description")))
     (org-autotask-initialize)
     (should
      (equal
@@ -326,26 +335,17 @@ EXPECTED is what `org-tag-alist' should be after initialization."
 
 (ert-deftest org-autotask-active-todo-search-two-lists ()
   "Test for `org-autotask-agenda-block' with two lists."
-  (org-autotask--test-fixture ((ctx-list
-                                (make-org-autotask-list
-                                 :tag "ctx"
-                                 :select-char ?c
-                                 :description "ctx description"))
-                               (ctx-list2
-                                (make-org-autotask-list
-                                 :tag "foo"
-                                 :select-char ?f
-                                 :description "foo description"))
-                               (org-autotask-somedaymaybes
-                                org-autotask--test-somedaymaybe)
-                               (org-autotask-keyword-next-action
-                                "DOIT")
-                               (org-todo-keywords
-                                '((sequence
-                                   "DOIT(t!)"
-                                   "|"
-                                   "DONE(d!)"
-                                   "CANCELLED(c!)"))))
+  (org-autotask--doit-agenda-fixture
+      ((ctx-list
+        (make-org-autotask-list
+         :tag "ctx"
+         :select-char ?c
+         :description "ctx description"))
+       (ctx-list2
+        (make-org-autotask-list
+         :tag "foo"
+         :select-char ?f
+         :description "foo description")))
     (org-autotask-initialize)
     (should
      (equal
@@ -755,19 +755,24 @@ tests."
        (delete-file temp-file)
        (delete-file temp-file-2))))
 
+(defun org-autotask-test--insert-three-url-items ()
+  "Insert three TODO items, the latter two carrying URL properties.
+Intended to run inside a `with-temp-file' for the current buffer."
+  (org-mode)
+  (org-insert-todo-heading-respect-content)
+  (insert "Item 0")
+  (org-insert-todo-heading-respect-content)
+  (insert "Item 1")
+  (org-set-property "URL" "https://1.example.com")
+  (org-insert-todo-heading-respect-content)
+  (insert "Item 2")
+  (org-set-property "URL" "https://2.example.com"))
+
 (ert-deftest org-autotask-with-url-basic ()
   "Basic test for `org-autotask-with-org-node-with-url'."
   (org-autotask--with-temp-org-agenda-files
     (with-temp-file temp-file
-      (org-mode)
-      (org-insert-todo-heading-respect-content)
-      (insert "Item 0")
-      (org-insert-todo-heading-respect-content)
-      (insert "Item 1")
-      (org-set-property "URL" "https://1.example.com")
-      (org-insert-todo-heading-respect-content)
-      (insert "Item 2")
-      (org-set-property "URL" "https://2.example.com"))
+      (org-autotask-test--insert-three-url-items))
     (let (executed)
       (org-autotask-with-org-node-with-url
        "https://1.example.com" (setq executed t)
@@ -780,15 +785,7 @@ tests."
   "Test for `org-autotask-with-org-node-with-url' when URL is not found."
   (org-autotask--with-temp-org-agenda-files
     (with-temp-file temp-file
-      (org-mode)
-      (org-insert-todo-heading-respect-content)
-      (insert "Item 0")
-      (org-insert-todo-heading-respect-content)
-      (insert "Item 1")
-      (org-set-property "URL" "https://1.example.com")
-      (org-insert-todo-heading-respect-content)
-      (insert "Item 2")
-      (org-set-property "URL" "https://2.example.com"))
+      (org-autotask-test--insert-three-url-items))
     (should-error
      (org-autotask-with-org-node-with-url "https://3.example.com"))))
 
@@ -819,15 +816,7 @@ tests."
   "Basic test for `org-autotask-clock-in-node-with-url'."
   (org-autotask--with-temp-org-agenda-files
     (with-temp-file temp-file
-      (org-mode)
-      (org-insert-todo-heading-respect-content)
-      (insert "Item 0")
-      (org-insert-todo-heading-respect-content)
-      (insert "Item 1")
-      (org-set-property "URL" "https://1.example.com")
-      (org-insert-todo-heading-respect-content)
-      (insert "Item 2")
-      (org-set-property "URL" "https://2.example.com"))
+      (org-autotask-test--insert-three-url-items))
     (org-autotask-clock-in-node-with-url "https://1.example.com")
     (org-clock-goto)
     (should (org-clocking-p))
@@ -982,13 +971,14 @@ These files are cleaned up after BODY executes."
        (delete-file temp-file)
        (delete-file archive-file))))
 
+(defun org-autotask-test--days-ago-time (days-ago)
+  "Return a time value DAYS-AGO days before the current time."
+  (time-subtract
+   (current-time) (seconds-to-time (* days-ago 24 60 60))))
+
 (defun org-autotask-test--make-old-clock-string (days-ago)
   "Return a CLOCK entry string for a time DAYS-AGO days in the past."
-  (let* ((now (current-time))
-         (seconds-per-day (* 24 60 60))
-         (old-time
-          (time-subtract
-           now (seconds-to-time (* days-ago seconds-per-day))))
+  (let* ((old-time (org-autotask-test--days-ago-time days-ago))
          (end-time (time-add old-time (seconds-to-time 3600))))
     (format "CLOCK: %s--%s =>  1:00"
             (format-time-string "[%Y-%m-%d %a %H:%M]" old-time)
@@ -999,17 +989,52 @@ These files are cleaned up after BODY executes."
   "Return a state change entry string for a time DAYS-AGO days in the past.
 NEW-STATE and OLD-STATE default to \"DONE\" and \"TODO\" respectively.
 The format matches Org's default `org-log-note-headings' state format."
-  (let* ((now (current-time))
-         (seconds-per-day (* 24 60 60))
-         (old-time
-          (time-subtract
-           now (seconds-to-time (* days-ago seconds-per-day))))
+  (let* ((old-time (org-autotask-test--days-ago-time days-ago))
          (new-state (or new-state "DONE"))
          (old-state (or old-state "TODO")))
     (format "- State %-12s from %-12s %s"
             (format "\"%s\"" new-state)
             (format "\"%s\"" old-state)
             (format-time-string "[%Y-%m-%d %a %H:%M]" old-time))))
+
+(defun org-autotask-test--archive-old-logs (temp-file archive-file)
+  "Archive logs older than 365 days from TEMP-FILE into ARCHIVE-FILE.
+Return the number of archived entries.  TEMP-FILE and ARCHIVE-FILE are passed
+explicitly because they are lexical bindings of the surrounding fixture."
+  (with-current-buffer (find-file-noselect temp-file)
+    (let ((org-archive-location (concat archive-file "::")))
+      (org-autotask-log-archive-old 365))))
+
+(defun org-autotask-test--should-archive-clock
+    (archive-file entry-regexp)
+  "Assert ARCHIVE-FILE has an archived \"Test Heading\" carrying ENTRY-REGEXP.
+Also assert the heading has an ARCHIVE_FILE property."
+  (with-current-buffer (find-file-noselect archive-file)
+    (goto-char (point-min))
+    (should
+     (re-search-forward "^\\* Test Heading.*:archived_logs:" nil t))
+    (should (re-search-forward ":ARCHIVE_FILE:" nil t))
+    (goto-char (point-min))
+    (should (re-search-forward entry-regexp nil t))))
+
+(defun org-autotask-test--should-not-archive (temp-file archive-file)
+  "Assert archiving TEMP-FILE is a no-op: clock kept, no ARCHIVE-FILE created."
+  (should
+   (= (org-autotask-test--archive-old-logs temp-file archive-file) 0))
+  (with-current-buffer (find-file-noselect temp-file)
+    (goto-char (point-min))
+    (should (re-search-forward "^CLOCK:" nil t)))
+  (should-not (file-exists-p archive-file)))
+
+(defun org-autotask-test--should-have-empty-source
+    (temp-file archive-file &rest absent-regexps)
+  "Assert ABSENT-REGEXPS and the empty LOGBOOK drawer are gone from TEMP-FILE.
+Also assert ARCHIVE-FILE was created."
+  (with-current-buffer (find-file-noselect temp-file)
+    (dolist (regexp (append absent-regexps '("^:LOGBOOK:" "^:END:")))
+      (goto-char (point-min))
+      (should-not (re-search-forward regexp nil t))))
+  (should (file-exists-p archive-file)))
 
 (ert-deftest org-autotask-log-archive-old-basic ()
   "Basic test for `org-autotask-log-archive-old'."
@@ -1021,27 +1046,15 @@ The format matches Org's default `org-log-note-headings' state format."
         (insert ":LOGBOOK:\n")
         (insert old-clock "\n")
         (insert ":END:\n"))
-      ;; Archive old clocks
-      (with-current-buffer (find-file-noselect temp-file)
-        (let* ((org-archive-location (concat archive-file "::"))
-               (count (org-autotask-log-archive-old 365)))
-          (should (= count 1))
-          ;; Source file should have no CLOCK entries and no empty drawer
-          (goto-char (point-min))
-          (should-not (re-search-forward "^CLOCK:" nil t))
-          (should-not (re-search-forward "^:LOGBOOK:" nil t))
-          (should-not (re-search-forward "^:END:" nil t))
-          ;; Archive file should have the clock under matching heading
-          (should (file-exists-p archive-file))))
-      (with-current-buffer (find-file-noselect archive-file)
-        (goto-char (point-min))
-        (should
-         (re-search-forward "^\\* Test Heading.*:archived_logs:"
-                            nil t))
-        ;; Should have ARCHIVE_FILE property
-        (should (re-search-forward ":ARCHIVE_FILE:" nil t))
-        (goto-char (point-min))
-        (should (re-search-forward "^CLOCK:" nil t))))))
+      (should
+       (= (org-autotask-test--archive-old-logs temp-file archive-file)
+          1))
+      ;; Source file should have no CLOCK entries and no empty drawer
+      (org-autotask-test--should-have-empty-source
+       temp-file archive-file
+       "^CLOCK:")
+      (org-autotask-test--should-archive-clock
+       archive-file "^CLOCK:"))))
 
 (ert-deftest org-autotask-log-archive-old-state-change ()
   "Test `org-autotask-log-archive-old' archives old state change entries."
@@ -1054,27 +1067,15 @@ The format matches Org's default `org-log-note-headings' state format."
         (insert ":LOGBOOK:\n")
         (insert old-state "\n")
         (insert ":END:\n"))
-      ;; Archive old state changes
-      (with-current-buffer (find-file-noselect temp-file)
-        (let* ((org-archive-location (concat archive-file "::"))
-               (count (org-autotask-log-archive-old 365)))
-          (should (= count 1))
-          ;; Source file should have no state change entries and no empty drawer
-          (goto-char (point-min))
-          (should-not (re-search-forward "^- State" nil t))
-          (should-not (re-search-forward "^:LOGBOOK:" nil t))
-          (should-not (re-search-forward "^:END:" nil t))
-          ;; Archive file should have the state change under matching heading
-          (should (file-exists-p archive-file))))
-      (with-current-buffer (find-file-noselect archive-file)
-        (goto-char (point-min))
-        (should
-         (re-search-forward "^\\* Test Heading.*:archived_logs:"
-                            nil t))
-        ;; Should have ARCHIVE_FILE property
-        (should (re-search-forward ":ARCHIVE_FILE:" nil t))
-        (goto-char (point-min))
-        (should (re-search-forward "^- State" nil t))))))
+      (should
+       (= (org-autotask-test--archive-old-logs temp-file archive-file)
+          1))
+      ;; Source file should have no state change entries and no empty drawer
+      (org-autotask-test--should-have-empty-source
+       temp-file archive-file
+       "^- State")
+      (org-autotask-test--should-archive-clock
+       archive-file "^- State"))))
 
 (ert-deftest
     org-autotask-log-archive-old-mixed-clocks-and-state-changes
@@ -1091,18 +1092,13 @@ The format matches Org's default `org-log-note-headings' state format."
         (insert old-state "\n")
         (insert old-clock "\n")
         (insert ":END:\n"))
-      ;; Archive both types
-      (with-current-buffer (find-file-noselect temp-file)
-        (let* ((org-archive-location (concat archive-file "::"))
-               (count (org-autotask-log-archive-old 365)))
-          (should (= count 2))
-          ;; Source file should have no log entries and no empty drawer
-          (goto-char (point-min))
-          (should-not (re-search-forward "^- State" nil t))
-          (should-not (re-search-forward "^CLOCK:" nil t))
-          (should-not (re-search-forward "^:LOGBOOK:" nil t))
-          (should-not (re-search-forward "^:END:" nil t))
-          (should (file-exists-p archive-file))))
+      (should
+       (= (org-autotask-test--archive-old-logs temp-file archive-file)
+          2))
+      ;; Source file should have no log entries and no empty drawer
+      (org-autotask-test--should-have-empty-source
+       temp-file archive-file
+       "^- State" "^CLOCK:")
       ;; Archive should have both types under single heading
       (with-current-buffer (find-file-noselect archive-file)
         (goto-char (point-min))
@@ -1142,11 +1138,9 @@ The format matches Org's default `org-log-note-headings' state format."
         (insert old-state-2 "\n")
         (insert old-clock-2 "\n")
         (insert ":END:\n"))
-      ;; Archive all entries
-      (with-current-buffer (find-file-noselect temp-file)
-        (let* ((org-archive-location (concat archive-file "::"))
-               (count (org-autotask-log-archive-old 365)))
-          (should (= count 4))))
+      (should
+       (= (org-autotask-test--archive-old-logs temp-file archive-file)
+          4))
       ;; Verify archive preserves original order: state, clock, state, clock
       ;; Sequential re-search-forward calls advance point, so finding all
       ;; patterns in sequence proves the order is preserved
@@ -1166,16 +1160,15 @@ The format matches Org's default `org-log-note-headings' state format."
       (with-temp-file temp-file
         (insert "* Test Heading\n")
         (insert old-clock "\n"))
-      ;; Archive old clocks
+      (should
+       (= (org-autotask-test--archive-old-logs temp-file archive-file)
+          1))
+      ;; Source should have no clock
       (with-current-buffer (find-file-noselect temp-file)
-        (let* ((org-archive-location (concat archive-file "::"))
-               (count (org-autotask-log-archive-old 365)))
-          (should (= count 1))
-          ;; Source should have no clock
-          (goto-char (point-min))
-          (should-not (re-search-forward "^CLOCK:" nil t))
-          ;; Archive should have clock without drawer
-          (should (file-exists-p archive-file))))
+        (goto-char (point-min))
+        (should-not (re-search-forward "^CLOCK:" nil t)))
+      ;; Archive should have clock without drawer
+      (should (file-exists-p archive-file))
       (with-current-buffer (find-file-noselect archive-file)
         (goto-char (point-min))
         (should
@@ -1197,16 +1190,15 @@ The format matches Org's default `org-log-note-headings' state format."
         (insert ":CLOCKING:\n")
         (insert old-clock "\n")
         (insert ":END:\n"))
-      ;; Archive old clocks
+      (should
+       (= (org-autotask-test--archive-old-logs temp-file archive-file)
+          1))
+      ;; Source should have no clock and no drawer
       (with-current-buffer (find-file-noselect temp-file)
-        (let* ((org-archive-location (concat archive-file "::"))
-               (count (org-autotask-log-archive-old 365)))
-          (should (= count 1))
-          ;; Source should have no clock and no drawer
-          (goto-char (point-min))
-          (should-not (re-search-forward "^CLOCK:" nil t))
-          (should-not (re-search-forward "^:CLOCKING:" nil t))
-          (should (file-exists-p archive-file))))
+        (goto-char (point-min))
+        (should-not (re-search-forward "^CLOCK:" nil t))
+        (should-not (re-search-forward "^:CLOCKING:" nil t)))
+      (should (file-exists-p archive-file))
       ;; Archive should have custom drawer
       (with-current-buffer (find-file-noselect archive-file)
         (goto-char (point-min))
@@ -1234,15 +1226,14 @@ The format matches Org's default `org-log-note-headings' state format."
         (insert ":LOGBOOK:\n")
         (insert old-clock2 "\n")
         (insert ":END:\n"))
-      ;; Archive old clocks
+      (should
+       (= (org-autotask-test--archive-old-logs temp-file archive-file)
+          2))
+      ;; Source should have no clocks
       (with-current-buffer (find-file-noselect temp-file)
-        (let* ((org-archive-location (concat archive-file "::"))
-               (count (org-autotask-log-archive-old 365)))
-          (should (= count 2))
-          ;; Source should have no clocks
-          (goto-char (point-min))
-          (should-not (re-search-forward "^CLOCK:" nil t))
-          (should (file-exists-p archive-file))))
+        (goto-char (point-min))
+        (should-not (re-search-forward "^CLOCK:" nil t)))
+      (should (file-exists-p archive-file))
       ;; Archive should have both headings
       (with-current-buffer (find-file-noselect archive-file)
         (goto-char (point-min))
@@ -1266,16 +1257,7 @@ The format matches Org's default `org-log-note-headings' state format."
       ;; Running clock has no end time
       (insert "CLOCK: [2020-01-01 Wed 10:00]\n")
       (insert ":END:\n"))
-    ;; Try to archive
-    (with-current-buffer (find-file-noselect temp-file)
-      (let* ((org-archive-location (concat archive-file "::"))
-             (count (org-autotask-log-archive-old 365)))
-        (should (= count 0))
-        ;; Source should still have the clock
-        (goto-char (point-min))
-        (should (re-search-forward "^CLOCK:" nil t))
-        ;; No archive file created
-        (should-not (file-exists-p archive-file))))))
+    (org-autotask-test--should-not-archive temp-file archive-file)))
 
 (ert-deftest org-autotask-log-archive-old-no-old-clocks ()
   "Test `org-autotask-log-archive-old' when there are no old clocks."
@@ -1288,16 +1270,8 @@ The format matches Org's default `org-log-note-headings' state format."
         (insert ":LOGBOOK:\n")
         (insert recent-clock "\n")
         (insert ":END:\n"))
-      ;; Try to archive
-      (with-current-buffer (find-file-noselect temp-file)
-        (let* ((org-archive-location (concat archive-file "::"))
-               (count (org-autotask-log-archive-old 365)))
-          (should (= count 0))
-          ;; Source should still have the clock
-          (goto-char (point-min))
-          (should (re-search-forward "^CLOCK:" nil t))
-          ;; No archive file created
-          (should-not (file-exists-p archive-file)))))))
+      (org-autotask-test--should-not-archive
+       temp-file archive-file))))
 
 (ert-deftest org-autotask-log-archive-old-old-and-recent ()
   "Test `org-autotask-log-archive-old' archives old, preserves recent."
@@ -1320,18 +1294,18 @@ The format matches Org's default `org-log-note-headings' state format."
         (insert recent-clock "\n")
         (insert old-clock "\n")
         (insert ":END:\n"))
+      ;; Only the old clock and old state change should be archived
+      (should
+       (= (org-autotask-test--archive-old-logs temp-file archive-file)
+          2))
+      ;; Source should still have recent clock and recent state change
       (with-current-buffer (find-file-noselect temp-file)
-        (let* ((org-archive-location (concat archive-file "::"))
-               (count (org-autotask-log-archive-old 365)))
-          ;; Only the old clock and old state change should be archived
-          (should (= count 2))
-          ;; Source should still have recent clock and recent state change
-          (goto-char (point-min))
-          (should (re-search-forward "^CLOCK:" nil t))
-          (should-not (re-search-forward "^CLOCK:" nil t))
-          (goto-char (point-min))
-          (should (re-search-forward "^- State" nil t))
-          (should-not (re-search-forward "^- State" nil t)))))))
+        (goto-char (point-min))
+        (should (re-search-forward "^CLOCK:" nil t))
+        (should-not (re-search-forward "^CLOCK:" nil t))
+        (goto-char (point-min))
+        (should (re-search-forward "^- State" nil t))
+        (should-not (re-search-forward "^- State" nil t))))))
 
 (ert-deftest org-autotask-log-archive-old-nested-heading ()
   "Test `org-autotask-log-archive-old' preserves outline path."
@@ -1345,11 +1319,10 @@ The format matches Org's default `org-log-note-headings' state format."
         (insert ":LOGBOOK:\n")
         (insert old-clock "\n")
         (insert ":END:\n"))
-      (with-current-buffer (find-file-noselect temp-file)
-        (let* ((org-archive-location (concat archive-file "::"))
-               (count (org-autotask-log-archive-old 365)))
-          (should (= count 1))
-          (should (file-exists-p archive-file))))
+      (should
+       (= (org-autotask-test--archive-old-logs temp-file archive-file)
+          1))
+      (should (file-exists-p archive-file))
       (with-current-buffer (find-file-noselect archive-file)
         (goto-char (point-min))
         ;; Heading should be just the leaf node
