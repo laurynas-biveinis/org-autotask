@@ -9,6 +9,7 @@
 (require 'ert)
 (require 'org-autotask)
 
+(require 'org-agenda)
 (require 'org-clock)
 (require 'org-element)
 
@@ -281,8 +282,12 @@ EXPECTED is what `org-tag-alist' should be after initialization."
       org-autotask-keyword-cancelled))))
 
 (ert-deftest org-autotask-initialize-org-stuck-projects ()
-  "Test that `org-stuck-projects' is properly initialized."
-  (org-autotask--test-fixture ((org-autotask-projects
+  "Test that `org-stuck-projects' is properly initialized.
+The not-stuck test lives in the general-regexp slot, not the keyword
+slot, so it does not match the project's own headline."
+  (org-autotask--test-fixture ((org-autotask-contexts
+                                org-autotask--test-contexts)
+                               (org-autotask-projects
                                 org-autotask--test-projects)
                                (org-autotask-somedaymaybes
                                 org-autotask--test-somedaymaybe)
@@ -296,9 +301,84 @@ EXPECTED is what `org-tag-alist' should be after initialization."
                                    "CANCELLED(c!)"))))
     (org-autotask-initialize)
     (should
+     (equal (nth 0 org-stuck-projects) "+prj-maybesomeday/!NEXT"))
+    (should (null (nth 1 org-stuck-projects)))
+    (should (null (nth 2 org-stuck-projects)))
+    (should
      (equal
-      org-stuck-projects
-      '("+prj-maybesomeday/!NEXT" ("NEXT") nil "")))))
+      (nth 3 org-stuck-projects)
+      (org-autotask--stuck-projects-regexp)))))
+
+;; Test stuck-project detection
+
+(ert-deftest org-autotask-stuck-projects-regexp ()
+  "Test `org-autotask--stuck-projects-regexp' matching.
+It matches an active next action carrying a context tag, with or without
+a title, but not the project headline, a waiting-for item, a completed
+action, or a contextless action."
+  (org-autotask--test-fixture ((org-autotask-contexts
+                                org-autotask--test-contexts)
+                               (org-autotask-keyword-next-action
+                                "NEXT")
+                               (org-todo-keywords
+                                '((sequence
+                                   "NEXT(n!)"
+                                   "|"
+                                   "DONE(d!)"
+                                   "CANCELLED(c!)"))))
+    (let ((re (org-autotask--stuck-projects-regexp))
+          (case-fold-search nil))
+      (should (string-match-p re "** NEXT Call :@c1:"))
+      (should (string-match-p re "*** NEXT Email :@c2:"))
+      (should (string-match-p re "** NEXT :@c1:"))
+      (should-not (string-match-p re "* NEXT Build shed :prj:"))
+      (should-not (string-match-p re "* NEXT :prj:"))
+      (should-not (string-match-p re "** NEXT Wait :@waitingfor:"))
+      (should-not (string-match-p re "** DONE Call :@c1:"))
+      (should-not (string-match-p re "** NEXT Untagged action")))))
+
+(ert-deftest org-autotask-stuck-projects-regexp-no-contexts ()
+  "Test `org-autotask--stuck-projects-regexp' with no contexts defined.
+Without contexts nothing can match, so every project stays stuck."
+  (org-autotask--test-fixture ((org-autotask-contexts nil))
+    (should
+     (equal
+      (org-autotask--stuck-projects-regexp) regexp-unmatchable))))
+
+(ert-deftest org-autotask-stuck-projects-detection ()
+  "Test that `org-agenda-list-stuck-projects' flags the right projects.
+A project is stuck unless it has a descendant with the next-action
+keyword and a context tag other than waiting-for."
+  (org-autotask--test-fixture ((org-autotask-contexts
+                                org-autotask--test-contexts)
+                               (temp-file
+                                (make-temp-file "org-tst" nil ".org"))
+                               (org-agenda-files (list temp-file)))
+    (unwind-protect
+        (progn
+          (org-autotask-initialize)
+          (write-region
+           (concat
+            "* TODO Project waiting only :project:\n"
+            "** TODO Wait for reply :@waitingfor:\n"
+            "* TODO Project with action :project:\n"
+            "** TODO Do the thing :@c1:\n"
+            "* TODO Project done child only :project:\n"
+            "** DONE Old action :@c1:\n"
+            "* TODO Project contextless :project:\n"
+            "** TODO Untagged action\n")
+           nil temp-file)
+          (org-agenda-list-stuck-projects)
+          (let ((agenda
+                 (with-current-buffer org-agenda-buffer-name
+                   (buffer-string))))
+            (should (string-match-p "waiting only" agenda))
+            (should (string-match-p "done child only" agenda))
+            (should (string-match-p "contextless" agenda))
+            (should-not (string-match-p "with action" agenda))))
+      (when (get-buffer org-agenda-buffer-name)
+        (kill-buffer org-agenda-buffer-name))
+      (delete-file temp-file))))
 
 ;; Test `org-autotask-agenda-block'
 

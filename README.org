@@ -49,12 +49,21 @@ results in
 (symbol-value 'org-todo-enforce-todo-dependencies)
   t
 (symbol-value 'org-stuck-projects)
-  ("+project-somedaymaybe/!TODO" ("TODO") nil "")
+  ("+project-somedaymaybe/!TODO" nil nil
+   "<regexp matching a next action carrying a context tag>")
 (symbol-value 'org-gcal-cancelled-todo-keyword)
   "CANCELLED"
 #+END_SRC
 
 The last variable comes from [[https://github.com/kidd/org-gcal.el][org-gcal]].
+
+The fourth ~org-stuck-projects~ element is a regexp that marks a project as
+/not/ stuck when its subtree contains a next action (the next-action keyword)
+tagged with one of the contexts. Because projects and next actions share the
+next-action keyword, this cannot be the keyword-based not-stuck test (which
+would match the project's own headline and so never report any project as
+stuck). A project whose only descendant is a waiting-for item, a contextless
+action, or a completed action therefore stays stuck.
 
 ** Agendas
 

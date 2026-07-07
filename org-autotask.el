@@ -72,7 +72,8 @@
 ;;     (symbol-value 'org-todo-enforce-todo-dependencies)
 ;;       t
 ;;     (symbol-value 'org-stuck-projects)
-;;       ("+project-somedaymaybe/!TODO" ("TODO") nil "")
+;;       ("+project-somedaymaybe/!TODO" nil nil
+;;        "<regexp matching a next action carrying a context tag>")
 ;;     (symbol-value 'org-gcal-cancelled-todo-keyword)
 ;;       "CANCELLED"
 ;;
@@ -647,6 +648,34 @@ The marker must be at the new clock position."
   "Block the command if no `org' task is clocked in."
   (org-autotask-require-org-clock))
 
+(defun org-autotask--stuck-projects-regexp ()
+  "Return the not-stuck regexp for `org-stuck-projects'.
+Matches a subtree headline that carries the next-action keyword and a
+context tag other than waiting-for, i.e. an actionable next action.  A
+project's own headline never matches, because projects carry no context
+tag, so `org-agenda-list-stuck-projects' reports a project as stuck
+unless it has such a descendant.  With no contexts defined, nothing
+matches and every project is stuck.
+
+This is used instead of the not-stuck keyword slot of
+`org-stuck-projects', because projects and next actions share
+`org-autotask-keyword-next-action': a keyword-based test always matches
+the project's own headline and so never reports any project as stuck."
+  (let ((context-tags
+         (mapcar #'org-autotask-list-tag org-autotask-contexts)))
+    (if (null context-tags)
+        regexp-unmatchable
+      (let ((other-tags (concat "\\(?:" org-tag-re ":\\)*")))
+        (concat
+         "^\\*+[ \t]+"
+         (regexp-quote org-autotask-keyword-next-action)
+         "[ \t]\\(?:.*?[ \t]\\)?:"
+         other-tags
+         (regexp-opt context-tags t)
+         ":"
+         other-tags
+         "[ \t]*$")))))
+
 ;;;###autoload
 (defun org-autotask-initialize ()
   "Initialize `org-autotask'.
@@ -725,7 +754,7 @@ inconsistencies."
             (org-autotask-list-not-tag
              org-autotask-somedaymaybes)
             "/!" org-autotask-keyword-next-action)
-          (,org-autotask-keyword-next-action) nil ""))
+          nil nil ,(org-autotask--stuck-projects-regexp)))
   (add-hook 'org-clock-in-hook #'org-autotask--clock-in-actions)
   ;; Configure `org-gcal'
   (setq org-gcal-cancelled-todo-keyword
