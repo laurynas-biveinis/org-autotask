@@ -72,8 +72,7 @@
 ;;     (symbol-value 'org-todo-enforce-todo-dependencies)
 ;;       t
 ;;     (symbol-value 'org-stuck-projects)
-;;       ("+project-somedaymaybe/!TODO" nil nil
-;;        "<regexp matching a next action carrying a context tag>")
+;;       ("+project-somedaymaybe/!TODO" nil nil "<never-matching regexp>")
 ;;     (symbol-value 'org-gcal-cancelled-todo-keyword)
 ;;       "CANCELLED"
 ;;
@@ -676,6 +675,47 @@ the project's own headline and so never reports any project as stuck."
          other-tags
          "[ \t]*$")))))
 
+(defun org-autotask--stuck-projects-skip ()
+  "Return a skip position when the project at point has a live next action.
+Tag-aware not-stuck test for `org-agenda-list-stuck-projects', installed
+as `org-agenda-skip-function-global' by
+`org-autotask--stuck-projects-advice'.  The subtree is scanned for a next
+action carrying a context tag (`org-autotask--stuck-projects-regexp');
+such a match counts as live only when its heading does not carry the
+someday/maybe tag, resolving inheritance via `org-get-tags'.  A line-local
+regexp cannot see a someday/maybe tag inherited from a pocket ancestor,
+which is why the not-stuck test is a skip function rather than the
+general-regexp slot of `org-stuck-projects'.  Returns the position of the
+next heading (skip, i.e. not stuck) when a live next action exists, or
+nil (keep, i.e. stuck) otherwise.  Skipping only the project's own
+headline, as Org's own stuck-projects skip does, lets a stuck sub-project
+nested under a non-stuck project still be examined."
+  (let ((re (org-autotask--stuck-projects-regexp))
+        (end (save-excursion (org-end-of-subtree t)))
+        (somedaymaybe
+         (org-autotask-list-tag org-autotask-somedaymaybes))
+        (case-fold-search nil)
+        (live nil))
+    (save-excursion
+      (while (and (not live) (re-search-forward re end t))
+        (unless (member
+                 somedaymaybe (org-get-tags (match-beginning 0)))
+          (setq live t))))
+    (and live
+         (save-excursion
+           (outline-next-heading)
+           (point)))))
+
+(defun org-autotask--stuck-projects-advice (orig-fn &rest args)
+  "Install the tag-aware not-stuck test around ORIG-FN called with ARGS.
+ORIG-FN is `org-agenda-list-stuck-projects'.  Binds
+`org-agenda-skip-function-global' to `org-autotask--stuck-projects-skip'
+so the not-stuck test resolves inherited tags, which the line-local
+regexp in the general-regexp slot of `org-stuck-projects' cannot."
+  (let ((org-agenda-skip-function-global
+         #'org-autotask--stuck-projects-skip))
+    (apply orig-fn args)))
+
 ;;;###autoload
 (defun org-autotask-initialize ()
   "Initialize `org-autotask'.
@@ -694,7 +734,8 @@ Overwrites Org configuration variables:
 - `org-stuck-projects'
 - `org-gcal-cancelled-todo-keyword' for `org-gcal'
 
-And set up hooks for clock-in automation.
+And set up hooks for clock-in automation, plus advice on
+`org-agenda-list-stuck-projects' for the tag-aware not-stuck test.
 
 Multiple calls without resetting the Org variables first will result in
 inconsistencies."
@@ -754,7 +795,10 @@ inconsistencies."
             (org-autotask-list-not-tag
              org-autotask-somedaymaybes)
             "/!" org-autotask-keyword-next-action)
-          nil nil ,(org-autotask--stuck-projects-regexp)))
+          nil nil ,regexp-unmatchable))
+  (advice-add
+   'org-agenda-list-stuck-projects
+   :around #'org-autotask--stuck-projects-advice)
   (add-hook 'org-clock-in-hook #'org-autotask--clock-in-actions)
   ;; Configure `org-gcal'
   (setq org-gcal-cancelled-todo-keyword

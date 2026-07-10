@@ -283,8 +283,8 @@ EXPECTED is what `org-tag-alist' should be after initialization."
 
 (ert-deftest org-autotask-initialize-org-stuck-projects ()
   "Test that `org-stuck-projects' is properly initialized.
-The not-stuck test lives in the general-regexp slot, not the keyword
-slot, so it does not match the project's own headline."
+The general-regexp slot never matches; the tag-aware not-stuck test is
+installed as advice on `org-agenda-list-stuck-projects'."
   (org-autotask--test-fixture ((org-autotask-contexts
                                 org-autotask--test-contexts)
                                (org-autotask-projects
@@ -299,15 +299,23 @@ slot, so it does not match the project's own headline."
                                    "|"
                                    "DONE(d!)"
                                    "CANCELLED(c!)"))))
-    (org-autotask-initialize)
-    (should
-     (equal (nth 0 org-stuck-projects) "+prj-maybesomeday/!NEXT"))
-    (should (null (nth 1 org-stuck-projects)))
-    (should (null (nth 2 org-stuck-projects)))
-    (should
-     (equal
-      (nth 3 org-stuck-projects)
-      (org-autotask--stuck-projects-regexp)))))
+    (unwind-protect
+        (progn
+          (org-autotask-initialize)
+          (should
+           (equal
+            (nth 0 org-stuck-projects) "+prj-maybesomeday/!NEXT"))
+          (should (null (nth 1 org-stuck-projects)))
+          (should (null (nth 2 org-stuck-projects)))
+          (should
+           (equal (nth 3 org-stuck-projects) regexp-unmatchable))
+          (should
+           (advice-member-p
+            #'org-autotask--stuck-projects-advice
+            'org-agenda-list-stuck-projects)))
+      (advice-remove
+       'org-agenda-list-stuck-projects
+       #'org-autotask--stuck-projects-advice))))
 
 ;; Test stuck-project detection
 
@@ -345,40 +353,98 @@ Without contexts nothing can match, so every project stays stuck."
      (equal
       (org-autotask--stuck-projects-regexp) regexp-unmatchable))))
 
+(defmacro org-autotask--with-stuck-projects (content &rest body)
+  "Run BODY with `agenda' bound to the stuck-projects listing for CONTENT.
+CONTENT is written to a temp Org file that becomes the sole
+`org-agenda-files' entry; `org-autotask-initialize' is called (and its
+`org-agenda-list-stuck-projects' advice removed afterwards), the stuck
+projects are listed, and `agenda' is bound to the agenda buffer text."
+  (declare (indent 1) (debug t))
+  `(org-autotask--test-fixture ((org-autotask-contexts
+                                 org-autotask--test-contexts)
+                                (temp-file
+                                 (make-temp-file "org-tst"
+                                                 nil
+                                                 ".org"))
+                                (org-agenda-files (list temp-file)))
+     (unwind-protect
+         (progn
+           (org-autotask-initialize)
+           (write-region ,content nil temp-file)
+           (org-agenda-list-stuck-projects)
+           (let ((agenda
+                  (with-current-buffer org-agenda-buffer-name
+                    (buffer-string))))
+             ,@body))
+       (advice-remove
+        'org-agenda-list-stuck-projects
+        #'org-autotask--stuck-projects-advice)
+       (when (get-buffer org-agenda-buffer-name)
+         (kill-buffer org-agenda-buffer-name))
+       (delete-file temp-file))))
+
 (ert-deftest org-autotask-stuck-projects-detection ()
   "Test that `org-agenda-list-stuck-projects' flags the right projects.
 A project is stuck unless it has a descendant with the next-action
 keyword and a context tag other than waiting-for."
-  (org-autotask--test-fixture ((org-autotask-contexts
-                                org-autotask--test-contexts)
-                               (temp-file
-                                (make-temp-file "org-tst" nil ".org"))
-                               (org-agenda-files (list temp-file)))
-    (unwind-protect
-        (progn
-          (org-autotask-initialize)
-          (write-region
-           (concat
-            "* TODO Project waiting only :project:\n"
-            "** TODO Wait for reply :@waitingfor:\n"
-            "* TODO Project with action :project:\n"
-            "** TODO Do the thing :@c1:\n"
-            "* TODO Project done child only :project:\n"
-            "** DONE Old action :@c1:\n"
-            "* TODO Project contextless :project:\n"
-            "** TODO Untagged action\n")
-           nil temp-file)
-          (org-agenda-list-stuck-projects)
-          (let ((agenda
-                 (with-current-buffer org-agenda-buffer-name
-                   (buffer-string))))
-            (should (string-match-p "waiting only" agenda))
-            (should (string-match-p "done child only" agenda))
-            (should (string-match-p "contextless" agenda))
-            (should-not (string-match-p "with action" agenda))))
-      (when (get-buffer org-agenda-buffer-name)
-        (kill-buffer org-agenda-buffer-name))
-      (delete-file temp-file))))
+  (org-autotask--with-stuck-projects
+      (concat
+       "* TODO Project waiting only :project:\n"
+       "** TODO Wait for reply :@waitingfor:\n"
+       "* TODO Project with action :project:\n"
+       "** TODO Do the thing :@c1:\n"
+       "* TODO Project done child only :project:\n"
+       "** DONE Old action :@c1:\n"
+       "* TODO Project contextless :project:\n"
+       "** TODO Untagged action\n")
+    (should (string-match-p "waiting only" agenda))
+    (should (string-match-p "done child only" agenda))
+    (should (string-match-p "contextless" agenda))
+    (should-not (string-match-p "with action" agenda))))
+
+(ert-deftest org-autotask-stuck-projects-detection-incubated-inherited
+    ()
+  "Test that an inherited someday/maybe does not mark a project unstuck.
+A project whose only open descendant is a next action under a
+someday/maybe pocket (someday/maybe tag inherited from an ancestor)
+stays stuck, while a sibling project with a live next action does not."
+  (org-autotask--with-stuck-projects
+      (concat
+       "* TODO Pocketed project :project:\n"
+       "** Ideas :somedaymaybe:\n"
+       "*** TODO Try rig :@c1:\n"
+       "* TODO Healthy project :project:\n"
+       "** TODO Next step :@c1:\n")
+    (should (string-match-p "Pocketed project" agenda))
+    (should-not (string-match-p "Healthy project" agenda))))
+
+(ert-deftest org-autotask-stuck-projects-detection-nested ()
+  "Test that a stuck sub-project under a non-stuck parent is listed.
+A project is judged independently of its ancestors, so a stuck
+sub-project must be reported even when its parent project has a live next
+action of its own."
+  (org-autotask--with-stuck-projects
+      (concat
+       "* TODO Parent project :project:\n"
+       "** TODO Do it :@c1:\n"
+       "** TODO Subproject :project:\n"
+       "*** TODO Wait :@waitingfor:\n")
+    (should (string-match-p "Subproject" agenda))
+    (should-not (string-match-p "Parent project" agenda))))
+
+(ert-deftest org-autotask-stuck-projects-detection-incubated-local ()
+  "Test that a local someday/maybe does not mark a project unstuck.
+A project whose only open descendant is a next action carrying the
+someday/maybe tag on its own headline stays stuck, while a sibling
+project with a live next action does not."
+  (org-autotask--with-stuck-projects
+      (concat
+       "* TODO Pocketed project :project:\n"
+       "** TODO Try rig :@c1:somedaymaybe:\n"
+       "* TODO Healthy project :project:\n"
+       "** TODO Next step :@c1:\n")
+    (should (string-match-p "Pocketed project" agenda))
+    (should-not (string-match-p "Healthy project" agenda))))
 
 ;; Test `org-autotask-agenda-block'
 

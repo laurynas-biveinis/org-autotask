@@ -49,21 +49,27 @@ results in
 (symbol-value 'org-todo-enforce-todo-dependencies)
   t
 (symbol-value 'org-stuck-projects)
-  ("+project-somedaymaybe/!TODO" nil nil
-   "<regexp matching a next action carrying a context tag>")
+  ("+project-somedaymaybe/!TODO" nil nil "<never-matching regexp>")
 (symbol-value 'org-gcal-cancelled-todo-keyword)
   "CANCELLED"
 #+END_SRC
 
 The last variable comes from [[https://github.com/kidd/org-gcal.el][org-gcal]].
 
-The fourth ~org-stuck-projects~ element is a regexp that marks a project as
-/not/ stuck when its subtree contains a next action (the next-action keyword)
-tagged with one of the contexts. Because projects and next actions share the
+A project counts as /not/ stuck when its subtree contains an actionable next
+action: a heading with the next-action keyword and one of the context tags,
+whose someday/maybe tag is /not/ set (locally or inherited from a
+someday/maybe pocket ancestor). Because projects and next actions share the
 next-action keyword, this cannot be the keyword-based not-stuck test (which
 would match the project's own headline and so never report any project as
-stuck). A project whose only descendant is a waiting-for item, a contextless
-action, or a completed action therefore stays stuck.
+stuck); and because a someday/maybe tag inherited from an ancestor never
+appears on the incubated action's own headline line, no line-local regexp can
+exclude it either. ~org-autotask-initialize~ therefore leaves the fourth
+~org-stuck-projects~ element as a never-matching regexp and installs the
+tag-aware not-stuck test as advice on ~org-agenda-list-stuck-projects~. A
+project whose only descendant is a waiting-for item, a contextless action, a
+completed action, or a someday/maybe-incubated next action therefore stays
+stuck.
 
 ** Agendas
 
