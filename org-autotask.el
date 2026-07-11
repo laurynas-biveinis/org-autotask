@@ -711,9 +711,15 @@ nested under a non-stuck project still be examined."
 ORIG-FN is `org-agenda-list-stuck-projects'.  Binds
 `org-agenda-skip-function-global' to `org-autotask--stuck-projects-skip'
 so the not-stuck test resolves inherited tags, which the line-local
-regexp in the general-regexp slot of `org-stuck-projects' cannot."
-  (let ((org-agenda-skip-function-global
-         #'org-autotask--stuck-projects-skip))
+regexp in the general-regexp slot of `org-stuck-projects' cannot.  A
+user's own `org-agenda-skip-function-global' is composed with, not
+replaced, so it still hides matching entries in this view as it does in
+every other agenda view."
+  (let* ((user-skip org-agenda-skip-function-global)
+         (org-agenda-skip-function-global
+          (lambda ()
+            (or (org-autotask--stuck-projects-skip)
+                (org-agenda-skip-eval user-skip)))))
     (apply orig-fn args)))
 
 ;;;###autoload

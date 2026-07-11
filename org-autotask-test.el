@@ -99,6 +99,12 @@
      (unwind-protect
          (progn
            ,@body)
+       ;; `org-autotask-initialize' installs this advice as a global
+       ;; side effect that no `let' binding reverts; remove it here so
+       ;; every initialize-calling test stays isolated.
+       (advice-remove
+        'org-agenda-list-stuck-projects
+        #'org-autotask--stuck-projects-advice)
        (cond
         (current-clock-marker
          (org-with-point-at current-clock-marker (org-clock-in)))
@@ -299,23 +305,16 @@ installed as advice on `org-agenda-list-stuck-projects'."
                                    "|"
                                    "DONE(d!)"
                                    "CANCELLED(c!)"))))
-    (unwind-protect
-        (progn
-          (org-autotask-initialize)
-          (should
-           (equal
-            (nth 0 org-stuck-projects) "+prj-maybesomeday/!NEXT"))
-          (should (null (nth 1 org-stuck-projects)))
-          (should (null (nth 2 org-stuck-projects)))
-          (should
-           (equal (nth 3 org-stuck-projects) regexp-unmatchable))
-          (should
-           (advice-member-p
-            #'org-autotask--stuck-projects-advice
-            'org-agenda-list-stuck-projects)))
-      (advice-remove
-       'org-agenda-list-stuck-projects
-       #'org-autotask--stuck-projects-advice))))
+    (org-autotask-initialize)
+    (should
+     (equal (nth 0 org-stuck-projects) "+prj-maybesomeday/!NEXT"))
+    (should (null (nth 1 org-stuck-projects)))
+    (should (null (nth 2 org-stuck-projects)))
+    (should (equal (nth 3 org-stuck-projects) regexp-unmatchable))
+    (should
+     (advice-member-p
+      #'org-autotask--stuck-projects-advice
+      'org-agenda-list-stuck-projects))))
 
 ;; Test stuck-project detection
 
@@ -356,9 +355,9 @@ Without contexts nothing can match, so every project stays stuck."
 (defmacro org-autotask--with-stuck-projects (content &rest body)
   "Run BODY with `agenda' bound to the stuck-projects listing for CONTENT.
 CONTENT is written to a temp Org file that becomes the sole
-`org-agenda-files' entry; `org-autotask-initialize' is called (and its
-`org-agenda-list-stuck-projects' advice removed afterwards), the stuck
-projects are listed, and `agenda' is bound to the agenda buffer text."
+`org-agenda-files' entry; `org-autotask-initialize' is called, the stuck
+projects are listed, and `agenda' is bound to the agenda buffer text.
+The base fixture removes the installed advice afterwards."
   (declare (indent 1) (debug t))
   `(org-autotask--test-fixture ((org-autotask-contexts
                                  org-autotask--test-contexts)
@@ -376,9 +375,6 @@ projects are listed, and `agenda' is bound to the agenda buffer text."
                   (with-current-buffer org-agenda-buffer-name
                     (buffer-string))))
              ,@body))
-       (advice-remove
-        'org-agenda-list-stuck-projects
-        #'org-autotask--stuck-projects-advice)
        (when (get-buffer org-agenda-buffer-name)
          (kill-buffer org-agenda-buffer-name))
        (delete-file temp-file))))
@@ -445,6 +441,45 @@ project with a live next action does not."
        "** TODO Next step :@c1:\n")
     (should (string-match-p "Pocketed project" agenda))
     (should-not (string-match-p "Healthy project" agenda))))
+
+(ert-deftest org-autotask-stuck-projects-detection-incubated-then-live
+    ()
+  "Test that a live action after an incubated one makes a project unstuck.
+The skip scan must continue past a someday/maybe-incubated next action to
+a later live sibling, so the project is not reported stuck; a sibling
+project with no live action stays stuck."
+  (org-autotask--with-stuck-projects
+      (concat
+       "* TODO Mixed project :project:\n"
+       "** Ideas :somedaymaybe:\n"
+       "*** TODO Incubated :@c1:\n"
+       "** TODO Real action :@c1:\n"
+       "* TODO Stuck control :project:\n"
+       "** TODO Wait :@waitingfor:\n")
+    (should (string-match-p "Stuck control" agenda))
+    (should-not (string-match-p "Mixed project" agenda))))
+
+(ert-deftest
+    org-autotask-stuck-projects-detection-honors-user-global-skip
+    ()
+  "Test that the advice composes with the user's global skip function.
+A stuck project that the user's `org-agenda-skip-function-global' hides
+must stay hidden in the stuck listing, while a stuck project it does not
+hide is still reported."
+  (let ((org-agenda-skip-function-global
+         (lambda ()
+           (when (org-match-line ".*Hidden")
+             (save-excursion
+               (outline-next-heading)
+               (point))))))
+    (org-autotask--with-stuck-projects
+        (concat
+         "* TODO Hidden stuck project :project:\n"
+         "** TODO Wait :@waitingfor:\n"
+         "* TODO Visible stuck project :project:\n"
+         "** TODO Wait :@waitingfor:\n")
+      (should (string-match-p "Visible stuck project" agenda))
+      (should-not (string-match-p "Hidden stuck project" agenda)))))
 
 ;; Test `org-autotask-agenda-block'
 
