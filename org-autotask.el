@@ -675,25 +675,24 @@ the project's own headline and so never reports any project as stuck."
          other-tags
          "[ \t]*$")))))
 
-(defun org-autotask--stuck-projects-skip ()
+(defun org-autotask--stuck-projects-skip (re somedaymaybe)
   "Return a skip position when the project at point has a live next action.
 Tag-aware not-stuck test for `org-agenda-list-stuck-projects', installed
 as `org-agenda-skip-function-global' by
 `org-autotask--stuck-projects-advice'.  The subtree is scanned for a next
-action carrying a context tag (`org-autotask--stuck-projects-regexp');
-such a match counts as live only when its heading does not carry the
-someday/maybe tag, resolving inheritance via `org-get-tags'.  A line-local
-regexp cannot see a someday/maybe tag inherited from a pocket ancestor,
-which is why the not-stuck test is a skip function rather than the
-general-regexp slot of `org-stuck-projects'.  Returns the position of the
+action carrying a context tag (RE, from
+`org-autotask--stuck-projects-regexp'); such a match counts as live only
+when its heading does not carry the SOMEDAYMAYBE tag, resolving
+inheritance via `org-get-tags'.  A line-local regexp cannot see a
+someday/maybe tag inherited from a pocket ancestor, which is why the
+not-stuck test is a skip function rather than the general-regexp slot of
+`org-stuck-projects'.  RE and SOMEDAYMAYBE are scan-invariant, so the
+advice computes them once and passes them in.  Returns the position of the
 next heading (skip, i.e. not stuck) when a live next action exists, or
 nil (keep, i.e. stuck) otherwise.  Skipping only the project's own
 headline, as Org's own stuck-projects skip does, lets a stuck sub-project
 nested under a non-stuck project still be examined."
-  (let ((re (org-autotask--stuck-projects-regexp))
-        (end (save-excursion (org-end-of-subtree t)))
-        (somedaymaybe
-         (org-autotask-list-tag org-autotask-somedaymaybes))
+  (let ((end (save-excursion (org-end-of-subtree t)))
         (case-fold-search nil)
         (live nil))
     (save-excursion
@@ -711,14 +710,18 @@ nested under a non-stuck project still be examined."
 ORIG-FN is `org-agenda-list-stuck-projects'.  Binds
 `org-agenda-skip-function-global' to `org-autotask--stuck-projects-skip'
 so the not-stuck test resolves inherited tags, which the line-local
-regexp in the general-regexp slot of `org-stuck-projects' cannot.  A
-user's own `org-agenda-skip-function-global' is composed with, not
-replaced, so it still hides matching entries in this view as it does in
-every other agenda view."
+regexp in the general-regexp slot of `org-stuck-projects' cannot.  The
+regexp and someday/maybe tag it needs are scan-invariant and so computed
+once here.  A user's own `org-agenda-skip-function-global' is composed
+with, not replaced, so it still hides matching entries in this view as it
+does in every other agenda view."
   (let* ((user-skip org-agenda-skip-function-global)
+         (re (org-autotask--stuck-projects-regexp))
+         (somedaymaybe
+          (org-autotask-list-tag org-autotask-somedaymaybes))
          (org-agenda-skip-function-global
           (lambda ()
-            (or (org-autotask--stuck-projects-skip)
+            (or (org-autotask--stuck-projects-skip re somedaymaybe)
                 (org-agenda-skip-eval user-skip)))))
     (apply orig-fn args)))
 
